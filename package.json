@@ -1,0 +1,8 @@
+{
+  "name": "fixgrammar-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:api": "node tests/test_api.js"
+  }
+}
