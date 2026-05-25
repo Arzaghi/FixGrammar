@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test:api": "node tests/test_api.js"
+    "test": "node tests/test_runner.js --all",
+    "test:api": "npm test"
   }
 }

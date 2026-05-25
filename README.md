@@ -19,6 +19,12 @@ This is a Chrome extension that adds a context menu item to fix grammar in selec
 - `manifest.json`: Extension manifest.
 - `background.js`: Service worker that handles context menu creation and execution.
 
+## Continuous Integration
+
+This repository includes GitHub Actions CI to automatically build, test, and release the Chrome extension when code is pushed to `main` or when a tag is created.
+
+A packaged extension ZIP is created and attached to the GitHub release as `fixgrammar-chrome-extension.zip`.
+
 ## Adding Icons
 
 The manifest references icon files in the `icons/` folder: `icons/icon16.png`, `icons/icon48.png`, `icons/icon128.png`. Place your PNG files in the `icons/` directory.
