@@ -5,17 +5,26 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>FixGrammar Settings</title>
     <style>
-      body { font-family: Arial, sans-serif; padding: 16px; }
+      body { font-family: Arial, sans-serif; padding: 16px; max-width: 500px; }
       label { display:block; margin-top:12px; }
-      select, button { margin-top:8px; }
+      select, input, button { margin-top:8px; }
+      #geminiSettings { margin-top: 16px; padding: 12px; background: #f5f5f5; border-radius: 4px; display: none; }
+      #geminiSettings.show { display: block; }
+      .hint { font-size: 12px; color: #666; margin-top: 4px; }
     </style>
   </head>
   <body>
     <h2>FixGrammar — Settings</h2>
     <label for="service">Grammar service</label>
     <select id="service">
-      <option value="https://api.languagetool.org/v2/check">LanguageTool (https://api.languagetool.org) - Free, Open-source</option>
+      <option value="languagetool">LanguageTool - Free, Open-source</option>
+      <option value="groq">Groq AI (Free Tier)</option>
     </select>
+    <div id="aiSettings" style="display: none;">
+      <label for="aiApiKey">Groq API Key</label>
+      <input type="password" id="aiApiKey" placeholder="Enter your Groq API key" style="width: 100%;">
+      <p class="hint">Get your FREE API key from <a href="https://console.groq.com/" target="_blank">Groq Console</a></p>
+    </div>
     <div>
       <button id="save">Save</button>
       <button id="reset">Reset to default</button>

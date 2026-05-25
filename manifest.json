@@ -14,7 +14,8 @@
     "open_in_tab": true
   },
   "host_permissions": [
-    "https://api.languagetool.org/*"
+    "https://api.languagetool.org/*",
+    "https://api.groq.com/*"
   ],
   "background": {
     "service_worker": "background.js"
