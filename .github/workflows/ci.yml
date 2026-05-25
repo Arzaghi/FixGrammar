@@ -60,7 +60,7 @@ jobs:
 
           cp -R manifest.json background.js content.js options icons build/
 
-          npx crx pack build \
+          npx crx pack build/ \
             --output release/fixgrammar-chrome-extension.crx \
             --zip-output release/fixgrammar-chrome-extension.zip \
             --private-key release/key.pem
