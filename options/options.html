@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>FixGrammar Settings</title>
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="settings-card shadow-lg">
+        <div class="card-header text-white">
+          <div class="d-flex align-items-center justify-content-between gap-3">
+            <div>
+              <span class="brand-badge">
+                <img src="../icons/icon128.png" alt="FixGrammar icon" width="28" height="28" />
+                <strong>FixGrammar</strong>
+              </span>
+              <h1 class="hero-title">FixGrammar Settings</h1>
+              <p class="hero-copy">Choose your service, update your Groq key.</p>
+            </div>
+            <img class="options-hero-icon" src="../icons/icon128.png" alt="Options icon" />
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <form id="settingsForm" class="row g-3">
+            <div class="col-12">
+              <label for="service" class="form-label">Grammar service</label>
+              <select id="service" class="form-select">
+                <option value="languagetool">LanguageTool</option>
+                <option value="groq">Groq AI</option>
+              </select>
+              <p class="field-hint">Pick the grammar engine you want the extension to use.</p>
+            </div>
+
+            <div id="aiSettings" class="col-12" style="display: none;">
+              <label for="aiApiKey" class="form-label">Groq API Key</label>
+              <input type="password" id="aiApiKey" class="form-control" placeholder="Enter your Groq API key" autocomplete="off">
+              <p class="field-hint">Get your key from <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer">Groq Console</a>.</p>
+            </div>
+
+            <div class="col-12 form-footer">
+              <button type="button" id="save" class="btn btn-primary btn-lg">Save Settings</button>
+              <div class="icon-list w-100 w-sm-auto">
+                <span class="icon-chip"><svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm3.95 5.2-4.59 6.36a.75.75 0 0 1-1.24.02L4.5 8.77a.75.75 0 1 1 1.14-.96l1.17 1.38 3.88-5.38a.75.75 0 0 1 1.3.39.75.75 0 0 1-.04.7Z"/></svg> Smart AI</span>
+                <span class="icon-chip"><svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5a6.5 6.5 0 0 0-6.5 6.5c0 3.065 1.97 5.667 4.74 6.524.2.055.42-.034.47-.236l.632-2.473a.4.4 0 0 1 .38-.302h3.516a.4.4 0 0 1 .38.302l.632 2.473c.05.202.27.291.47.236A6.5 6.5 0 0 0 8 1.5Zm0 1.2c1.985 0 3.8 1.015 4.874 2.605-.03.24-.245.395-.483.395H3.608a.375.375 0 0 1-.32-.558A5.982 5.982 0 0 1 8 2.7Zm2.96 3.685A4.501 4.501 0 0 0 8 4.1a4.5 4.5 0 0 0-2.96 1.285.375.375 0 0 1-.592-.49A5.25 5.25 0 0 1 8 3.5a5.25 5.25 0 0 1 3.552 1.295.375.375 0 0 1-.592.49Zm1.012 3.769a.75.75 0 0 1-.822.686H5.85a.75.75 0 0 1-.822-.686l-.333-2.6a.75.75 0 0 1 .746-.815h3.138a.75.75 0 0 1 .746.815l-.333 2.6Z"/></svg> Centered layout</span>
+              </div>
+            </div>
+          </form>
+          <div id="statusMessage" class="alert alert-success d-none mt-4 mb-0" role="alert">Settings saved successfully.</div>
+        </div>
+      </section>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>

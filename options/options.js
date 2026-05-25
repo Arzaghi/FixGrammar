@@ -15,20 +15,18 @@ function saveOptions() {
   }
   
   chrome.storage.sync.set(settings, () => {
-    alert('Saved');
+    showStatusMessage('Settings saved successfully.');
   });
 }
 
-function resetOptions() {
-  chrome.storage.sync.set({ 
-    grammarService: DEFAULT_SERVICE,
-    aiApiKey: ''
-  }, () => {
-    document.getElementById('service').value = DEFAULT_SERVICE;
-    document.getElementById('aiApiKey').value = '';
-    toggleAISettings();
-    alert('Reset to default');
-  });
+function showStatusMessage(message) {
+  const status = document.getElementById('statusMessage');
+  status.textContent = message;
+  status.classList.remove('d-none');
+  window.clearTimeout(showStatusMessage.timeout);
+  showStatusMessage.timeout = window.setTimeout(() => {
+    status.classList.add('d-none');
+  }, 3200);
 }
 
 function toggleAISettings() {
@@ -56,5 +54,4 @@ function restoreOptions() {
 
 document.addEventListener('DOMContentLoaded', restoreOptions);
 document.getElementById('save').addEventListener('click', saveOptions);
-document.getElementById('reset').addEventListener('click', resetOptions);
 document.getElementById('service').addEventListener('change', toggleAISettings);
