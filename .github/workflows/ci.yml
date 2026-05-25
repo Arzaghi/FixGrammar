@@ -53,9 +53,7 @@ jobs:
           mkdir -p release build
 
           if [ -n "${{ secrets.CRX_PRIVATE_KEY }}" ]; then
-            cat <<'EOF' > release/key.pem
-${{ secrets.CRX_PRIVATE_KEY }}
-EOF
+            printf '%s\n' "${{ secrets.CRX_PRIVATE_KEY }}" > release/key.pem
           else
             npx crx keygen --directory release
           fi
