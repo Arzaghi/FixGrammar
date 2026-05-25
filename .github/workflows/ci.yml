@@ -47,10 +47,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build extension package
+      - name: Build CRX and ZIP packages
         run: |
-          mkdir -p release
-          zip -r release/fixgrammar-chrome-extension.zip manifest.json background.js content.js options icons
+          rm -rf release build
+          mkdir -p release build
+
+          if [ -n "${{ secrets.CRX_PRIVATE_KEY }}" ]; then
+            cat <<'EOF' > release/key.pem
+${{ secrets.CRX_PRIVATE_KEY }}
+EOF
+          else
+            npx crx keygen --directory release
+          fi
+
+          cp -R manifest.json background.js content.js options icons build/
+
+          npx crx pack build \
+            --output release/fixgrammar-chrome-extension.crx \
+            --zip-output release/fixgrammar-chrome-extension.zip \
+            --private-key release/key.pem
 
       - name: Create GitHub release
         id: create_release
@@ -66,7 +81,7 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload release asset
+      - name: Upload ZIP release asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,3 +90,13 @@ jobs:
           asset_path: release/fixgrammar-chrome-extension.zip
           asset_name: fixgrammar-chrome-extension.zip
           asset_content_type: application/zip
+
+      - name: Upload CRX release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/fixgrammar-chrome-extension.crx
+          asset_name: fixgrammar-chrome-extension.crx
+          asset_content_type: application/x-chrome-extension

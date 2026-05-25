@@ -4,6 +4,10 @@
   "private": true,
   "scripts": {
     "test": "node tests/test_runner.js --all",
-    "test:api": "npm test"
+    "test:api": "npm test",
+    "build:crx": "mkdir -p release && npx crx pack build --output release/fixgrammar-chrome-extension.crx --zip-output release/fixgrammar-chrome-extension.zip --private-key release/key.pem"
+  },
+  "devDependencies": {
+    "crx": "^5.0.1"
   }
 }

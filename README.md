@@ -23,7 +23,17 @@ This is a Chrome extension that adds a context menu item to fix grammar in selec
 
 This repository includes GitHub Actions CI to automatically build, test, and release the Chrome extension when code is pushed to `main` or when a tag is created.
 
-A packaged extension ZIP is created and attached to the GitHub release as `fixgrammar-chrome-extension.zip`.
+A packaged extension ZIP is created and attached to the GitHub release as `fixgrammar-chrome-extension.zip`, and a signed CRX package is also published as `fixgrammar-chrome-extension.crx`.
+
+## CRX signing key
+
+To create stable CRX releases, add your extension private key to the repository secrets as `CRX_PRIVATE_KEY`.
+
+- In GitHub, go to `Settings > Secrets and variables > Actions`.
+- Create a new secret named `CRX_PRIVATE_KEY`.
+- Paste the contents of your PEM private key file.
+
+If the secret is missing, CI will generate a temporary key during the build, but that key will change on every run.
 
 ## Adding Icons
 
