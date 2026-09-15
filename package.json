@@ -7,7 +7,7 @@
     "build": "node scripts/build.mjs",
     "build:crx": "node scripts/build.mjs",
     "test": "node tests/test_runner.js --all",
-    "test:api": "npm test"
+    "test:gemini": "npm test"
   },
   "devDependencies": {
     "crx3": "^2.0.0"

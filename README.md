@@ -1,7 +1,7 @@
 # FixGrammar
 
 [![Latest release](https://img.shields.io/github/v/release/Arzaghi/FixGrammar?logo=github&label=release)](https://github.com/Arzaghi/FixGrammar/releases/latest)
-[![API integration test](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-api.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-api.yml)
+[![API integration test](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-gemini.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-gemini.yml)
 [![Build CRX](https://github.com/Arzaghi/FixGrammar/actions/workflows/build-crx.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/build-crx.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
@@ -68,7 +68,7 @@ dist/                     Build output (CRX + ZIP) — gitignored
 tests/                    API integration tests
 package.json              Node build-tool dependencies
 .github/workflows/build-crx.yml  Extension build and GitHub Release workflow
-.github/workflows/test-api.yml   Scheduled API integration test workflow
+.github/workflows/test-gemini.yml   Scheduled API integration test workflow
 ```
 
 ## Privacy and data handling
