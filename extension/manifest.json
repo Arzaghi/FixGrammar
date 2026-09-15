@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "FixGrammar",
   "version": "1.0.0",
-  "description": "Fix grammar in selected text using an AI grammar service.",
+  "description": "Fix grammar and translate/rewrite selected text in any tone using Google Gemini.",
   "permissions": [
     "contextMenus",
     "activeTab",
@@ -10,18 +10,23 @@
     "storage"
   ],
   "options_ui": {
-    "page": "options/options.html",
+    "page": "options.html",
     "open_in_tab": true
   },
   "host_permissions": [
-    "https://api.languagetool.org/*",
-    "https://api.groq.com/*"
+    "https://generativelanguage.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "FixGrammar"
+    "default_popup": "popup.html",
+    "default_title": "FixGrammar",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -37,6 +42,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
+      "all_frames": true,
       "js": ["content.js"]
     }
   ]

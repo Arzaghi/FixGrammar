@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FixGrammar</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #f8f9fa;
+      --text-primary: #1f2328;
+      --text-secondary: #57606a;
+      --text-muted: #6e7781;
+      --card-bg: #ffffff;
+      --card-border: #e1e4e8;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      --input-bg: #fafafa;
+      --input-border: #dadce0;
+      --divider: #eaecef;
+      --footer-bg: #ffffff;
+      --footer-border: #d0d7de;
+      --footer-color: #57606a;
+      --footer-hover-bg: #e8f0fe;
+      --footer-hover-border: #4285f4;
+      --footer-hover-color: #1a56db;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #0f1117;
+        --text-primary: #e8eaed;
+        --text-secondary: #8a91a8;
+        --text-muted: #6b7385;
+        --card-bg: #1a1d27;
+        --card-border: #252836;
+        --card-shadow: none;
+        --input-bg: #12141c;
+        --input-border: #2e3346;
+        --divider: #1e2130;
+        --footer-bg: #1a1d27;
+        --footer-border: #303647;
+        --footer-color: #a8b4cc;
+        --footer-hover-bg: rgba(66, 133, 244, 0.12);
+        --footer-hover-border: rgba(66, 133, 244, 0.45);
+        --footer-hover-color: #6ea8fe;
+      }
+    }
+
+    body {
+      width: 420px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 18px 16px 14px;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .gemini-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .app-icon {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      border-radius: 6px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: #4285f4;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── Error banner ────────────────────────────────────────────── */
+    .error-banner {
+      background: rgba(198, 40, 40, 0.12);
+      border: 1px solid rgba(198, 40, 40, 0.35);
+      color: #d93025;
+      font-size: 12px;
+      padding: 8px 10px 8px 11px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: none;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+    @media (prefers-color-scheme: dark) {
+      .error-banner {
+        background: rgba(198, 40, 40, 0.15);
+        border-color: rgba(198, 40, 40, 0.4);
+        color: #ef9a9a;
+      }
+    }
+    .error-banner.visible { display: flex; }
+    .error-text { flex: 1; }
+
+    /* ── Translate card ──────────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      resize: vertical;
+      padding: 10px 38px 10px 11px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      line-height: 1.5;
+      color: var(--text-primary);
+      background: var(--input-bg);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus {
+      border-color: #4285f4;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.18);
+    }
+
+    .textarea-wrap { position: relative; }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--card-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1;
+      opacity: 0.9;
+      transition: opacity 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .copy-btn:hover { opacity: 1; border-color: #4285f4; color: #4285f4; }
+    .copy-btn.copied { border-color: #34a853; color: #137333; }
+    @media (prefers-color-scheme: dark) {
+      .copy-btn.copied { color: #81c995; }
+    }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(248, 249, 250, 0.72);
+      border-radius: 8px;
+      pointer-events: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      .loading-overlay { background: rgba(15, 17, 23, 0.72); }
+    }
+    .loading-overlay.visible { display: flex; }
+    .spinner {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 3px solid rgba(66, 133, 244, 0.22);
+      border-top-color: #4285f4;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .control-field { flex: 1; min-width: 0; }
+    .control-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 5px;
+    }
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '';
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      width: 9px;
+      height: 9px;
+      border-right: 2px solid var(--text-muted);
+      border-bottom: 2px solid var(--text-muted);
+      transform: translateY(-65%) rotate(45deg);
+      pointer-events: none;
+      transition: border-color 0.2s;
+    }
+    .select-wrap:focus-within::after { border-color: #4285f4; }
+    select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding: 9px 30px 9px 12px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      background: var(--input-bg);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    select:hover {
+      border-color: #a9c3f5;
+    }
+    select:focus {
+      border-color: #4285f4;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.18);
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+    }
+    .translate-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #4285f4, #9b72cb);
+      color: #fff;
+      transition: filter 0.15s, opacity 0.15s;
+    }
+    .translate-btn:hover:not(:disabled) { filter: brightness(1.08); }
+    .translate-btn:disabled { opacity: 0.75; cursor: not-allowed; }
+
+    .btn-spinner {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+      display: none;
+      flex-shrink: 0;
+    }
+    .translate-btn.loading .btn-spinner { display: inline-block; }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .undo-btn {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--input-bg);
+      border: 1.5px solid var(--input-border);
+      color: var(--text-secondary);
+      transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+    }
+    .undo-btn:hover:not(:disabled) {
+      border-color: #4285f4;
+      color: #4285f4;
+    }
+    .undo-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .footer {
+      display: flex;
+      justify-content: center;
+    }
+    .link-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--footer-bg);
+      border: 1px solid var(--footer-border);
+      border-radius: 8px;
+      box-shadow: var(--card-shadow);
+      color: var(--footer-color);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 9px 12px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .link-btn:hover {
+      background: var(--footer-hover-bg);
+      border-color: var(--footer-hover-border);
+      color: var(--footer-hover-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img class="app-icon" src="icons/icon128.png" alt="" width="22" height="22">
+    <span class="logo">FixGrammar</span>
+  </div>
+  <div class="subtitle">Translate &amp; rewrite text with Gemini</div>
+
+  <div class="error-banner" id="errorBanner">
+    <span class="error-text" id="errorText"></span>
+  </div>
+
+  <div class="card">
+    <div class="textarea-wrap">
+      <textarea id="textInput" placeholder="Type or paste text here…" spellcheck="true"></textarea>
+      <button class="copy-btn" id="copyBtn" title="Copy text" type="button">📋</button>
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <div class="control-field">
+        <label for="languageSelect">🌐 Target language</label>
+        <div class="select-wrap">
+        <select id="languageSelect"></select>
+        </div>
+      </div>
+      <div class="control-field">
+        <label for="toneSelect">🎛️ Tone</label>
+        <div class="select-wrap">
+        <select id="toneSelect">
+          <option value="neutral">Neutral</option>
+          <option value="formal">Formal</option>
+          <option value="casual">Casual</option>
+          <option value="friendly">Friendly</option>
+          <option value="professional">Professional</option>
+          <option value="concise">Concise</option>
+        </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="translate-btn" id="translateBtn"><span class="btn-spinner"></span><span id="translateBtnText">Translate</span></button>
+      <button class="undo-btn" id="undoBtn" disabled title="Revert to original text">↩ Undo</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="link-btn" id="settingsBtn" title="Open extension settings">⚙ <span>Settings</span></button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

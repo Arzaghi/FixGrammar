@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FixGrammar — Settings</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #f0f2f5;
+      --text-primary: #202124;
+      --text-secondary: #5f6368;
+      --text-muted: #80868b;
+      --card-bg: #ffffff;
+      --card-border: rgba(0, 0, 0, 0.06);
+      --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      --input-bg: #fafafa;
+      --input-border: #dadce0;
+      --footer-color: #80868b;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #0f1117;
+        --text-primary: #e8eaed;
+        --text-secondary: #9aa0a6;
+        --text-muted: #6b7385;
+        --card-bg: #1a1d27;
+        --card-border: #252836;
+        --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        --input-bg: #12141c;
+        --input-border: #2e3346;
+        --footer-color: #6b7385;
+      }
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 22px 20px 14px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 560px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .page-header { margin-bottom: 16px; }
+    .page-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #4285f4;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .page-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 11px;
+      box-shadow: var(--card-shadow);
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .input-wrap { position: relative; }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--input-bg);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #4285f4;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.18);
+    }
+
+    .eye-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--text-muted);
+      padding: 4px;
+      line-height: 1;
+    }
+    .eye-btn:hover { color: #4285f4; }
+
+    .hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+    .hint a { color: #4285f4; text-decoration: none; font-weight: 500; }
+    .hint a:hover { text-decoration: underline; }
+
+    .tone-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+    .gemini-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .card-title .gemini-icon {
+      width: 16px;
+      height: 16px;
+    }
+    .app-icon {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      border-radius: 6px;
+    }
+    /* ── Save section ─────────────────────────────────────────────── */
+    .save-section { margin-top: 4px; }
+    .save-btn {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: not-allowed;
+      background: linear-gradient(135deg, #4285f4, #1a6adb);
+      color: #fff;
+      opacity: 0.5;
+      transition: opacity 0.15s, filter 0.15s;
+    }
+    .save-btn.dirty {
+      opacity: 1;
+      cursor: pointer;
+    }
+    .save-btn.dirty:hover { filter: brightness(1.08); }
+    .save-msg {
+      font-size: 13px;
+      text-align: center;
+      color: #137333;
+      padding: 9px 12px;
+      background: #e6f4ea;
+      border-radius: 8px;
+      margin-top: 7px;
+      visibility: hidden;
+    }
+    @media (prefers-color-scheme: dark) {
+      .save-msg {
+        background: rgba(52, 168, 83, 0.15);
+        color: #81c995;
+        border: 1px solid rgba(52, 168, 83, 0.25);
+      }
+    }
+
+    .settings-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-top: auto;
+      padding-top: 18px;
+      padding-bottom: 10px;
+      font-size: 11px;
+      color: var(--footer-color);
+      flex-shrink: 0;
+    }
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #4285f4;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .github-link:hover {
+      color: #a8c7fa;
+      text-decoration: underline;
+    }
+    .github-link svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="page-header">
+      <div class="page-title">
+        <img class="app-icon" src="icons/icon128.png" alt="" width="22" height="22">
+        FixGrammar
+      </div>
+      <div class="page-subtitle">Fix grammar and translate/rewrite selected text, powered by Google Gemini</div>
+    </div>
+
+    <!-- Gemini API key -->
+    <div class="card">
+      <div class="card-title">
+        <svg class="gemini-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <linearGradient id="geminiGradientCard" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#4285f4"/>
+              <stop offset="0.5" stop-color="#9b72cb"/>
+              <stop offset="1" stop-color="#d96570"/>
+            </linearGradient>
+          </defs>
+          <path d="M12 0c0 6.075 5.925 12 12 12-6.075 0-12 5.925-12 12 0-6.075-5.925-12-12-12C6.075 12 12 6.075 12 0Z" fill="url(#geminiGradientCard)"/>
+        </svg>
+        Google Gemini API Key
+      </div>
+
+      <div class="field">
+        <label for="geminiKey">Gemini API Key</label>
+        <div class="input-wrap">
+          <input type="password" id="geminiKey" placeholder="AIza…" autocomplete="off" spellcheck="false" />
+          <button class="eye-btn" data-target="geminiKey" title="Show / hide key" type="button">👁</button>
+        </div>
+        <div class="hint">Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio ↗</a></div>
+      </div>
+
+      <p class="tone-note" id="toneNote">Right-click selected text to fix its grammar, or rewrite it as <strong>Formal</strong>, <strong>Casual</strong>, <strong>Friendly</strong>, <strong>Professional</strong>, or <strong>Concise</strong>. Use the toolbar popup to translate and rewrite any text into another language.</p>
+    </div>
+
+    <div class="save-section">
+      <button class="save-btn" id="saveBtn" disabled>💾 Save Settings</button>
+      <div class="save-msg" id="saveMsg">✓ Settings saved</div>
+    </div>
+
+    <footer class="settings-footer">
+      <span>Open source ·</span>
+      <a
+        class="github-link"
+        href="https://github.com/Arzaghi/FixGrammar"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="View FixGrammar source code on GitHub"
+        title="View source code on GitHub"
+      >
+        View on GitHub
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+        </svg>
+      </a>
+      <span id="versionSpan" style="display:none">· v<span id="version">–</span></span>
+    </footer>
+
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

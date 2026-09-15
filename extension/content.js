@@ -1,253 +1,276 @@
-let popup = null;
 let currentEditable = null;
 let savedInputSelection = null;
 let savedRange = null;
 
 function isEditable(element) {
-  return element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.contentEditable === 'true');
+  // `element.contentEditable` is a string reflecting the raw attribute
+  // ('true' | 'false' | 'inherit' | 'plaintext-only') — many modern text
+  // boxes (e.g. Google Translate's input, GitHub's description fields) use
+  // contenteditable="plaintext-only" to get a plain-text editing area
+  // without rich-text paste, which the old `=== 'true'` check missed.
+  // `isContentEditable` is the resolved boolean and correctly covers both
+  // variants as well as inherited editability from an ancestor.
+  return !!(element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.isContentEditable));
 }
 
-async function fixGrammarText(text) {
-  if (!text) return text;
-  try {
-    const settings = await getSettings();
-    
-    if (settings.grammarService === 'groq') {
-      return await fixWithGroq(text, settings.aiApiKey);
-    }
-    
-    // Fall back to LanguageTool for languagetool service
-    return await fixWithLanguageTool(text);
-  } catch (error) {
-    console.error('FixGrammar API error:', error);
-    return text;
-  }
-}
-
-async function fixWithGroq(text, apiKey) {
-  if (!apiKey) {
-    console.error('FixGrammar: No Groq API key configured');
-    return text;
-  }
-
-  const prompt = `You are a grammar correction assistant. Your task is to:
-1. Detect the language of the following text
-2. Fix any grammar, spelling, or punctuation errors
-3. Return ONLY the corrected text without any explanations or comments
-
-Text: "${text}"
-
-Corrected text:`;
-
-  const requestBody = {
-    model: "llama-3.3-70b-versatile",
-    messages: [
-      {
-        role: "user",
-        content: prompt
-      }
-    ],
-    temperature: 0.1,
-    max_tokens: 2048
-  };
-
-  const apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(requestBody)
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('FixGrammar Groq API error:', response.status, errorText);
-    return text;
-  }
-
-  const data = await response.json();
-  
-  if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-    let fixedText = data.choices[0].message.content;
-    // Clean up the response - remove quotes if present
-    fixedText = fixedText.trim();
-    if ((fixedText.startsWith('"') && fixedText.endsWith('"')) || 
-        (fixedText.startsWith("'") && fixedText.endsWith("'"))) {
-      fixedText = fixedText.slice(1, -1);
-    }
-    console.log('FixGrammar used service: Groq AI (Llama)');
-    return fixedText;
-  }
-
-  return text;
-}
-
-async function fixWithLanguageTool(text) {
-  const params = new URLSearchParams();
-  params.append('text', text);
-  params.append('language', 'en-US');
-  params.append('enabledOnly', 'false');
-
-  const serviceUrl = 'https://api.languagetool.org/v2/check';
-  const response = await fetch(serviceUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString()
-  });
-
-  if (!response.ok) return text;
-  
-  const data = await response.json();
-  let replacements = getReplacementsFromResponse(data);
-  
-  if (!replacements || !replacements.length) return text;
-  
-  let fixed = text;
-  for (const item of replacements) {
-    fixed = fixed.slice(0, item.offset) + item.replacement + fixed.slice(item.offset + item.length);
-  }
-  
-  console.log('FixGrammar used service: LanguageTool');
-  return fixed;
-}
-
-function getReplacementsFromResponse(data) {
-  if (!data) return [];
-  if (data.matches && Array.isArray(data.matches)) {
-    return data.matches
-      .map(match => {
-        if (match.replacements && match.replacements.length) {
-          return {
-            offset: match.offset,
-            length: match.length,
-            replacement: match.replacements[0].value
-          };
-        }
-        return null;
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.offset - a.offset);
-  }
-  return [];
-}
-
-function getSettings() {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get({ 
-      grammarService: 'languagetool',
-      aiApiKey: ''
-    }, (items) => {
-      resolve({
-        grammarService: items.grammarService || 'languagetool',
-        aiApiKey: items.aiApiKey || ''
-      });
-    });
-  });
-}
-
-document.addEventListener('selectionchange', () => {
-  const selection = window.getSelection();
-  if (selection.rangeCount > 0 && !selection.isCollapsed) {
-    const range = selection.getRangeAt(0);
-    let editableElement = null;
-    let node = range.commonAncestorContainer;
-    if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
-    while (node && node !== document.body) {
-      if (isEditable(node)) {
-        editableElement = node;
-        break;
-      }
-      node = node.parentNode;
-    }
-    if (editableElement) {
-      currentEditable = editableElement;
-      if (currentEditable.tagName === 'INPUT' || currentEditable.tagName === 'TEXTAREA') {
-        savedInputSelection = {
-          start: currentEditable.selectionStart,
-          end: currentEditable.selectionEnd
-        };
-        savedRange = null;
-      } else {
-        savedInputSelection = null;
-        savedRange = range.cloneRange();
-      }
-      const rect = range.getBoundingClientRect();
-      if (!popup) {
-        popup = document.createElement('div');
-        popup.style.position = 'absolute';
-        popup.style.zIndex = '10000';
-        popup.style.background = 'transparent';
-        popup.style.color = 'transparent';
-        popup.style.padding = '0';
-        popup.style.border = 'none';
-        popup.style.boxShadow = 'none';
-        popup.style.borderRadius = '0';
-        popup.style.width = '24px';
-        popup.style.height = '24px';
-        popup.style.cursor = 'pointer';
-        popup.style.display = 'flex';
-        popup.style.alignItems = 'center';
-        popup.style.justifyContent = 'center';
-        const icon = document.createElement('img');
-        icon.src = chrome.runtime.getURL('icons/icon128.png');
-        icon.style.width = '32px';
-        icon.style.height = '32px';
-        icon.style.display = 'block';
-        icon.style.pointerEvents = 'none';
-        popup.appendChild(icon);
-        popup.addEventListener('mousedown', (event) => {
-          event.preventDefault();
-        });
-        popup.addEventListener('click', async () => {
-          if (!currentEditable) {
-            hidePopup();
-            return;
-          }
-          if (currentEditable.tagName === 'INPUT' || currentEditable.tagName === 'TEXTAREA') {
-            const start = savedInputSelection?.start;
-            const end = savedInputSelection?.end;
-            if (start != null && end != null && start !== end) {
-              const selectedText = currentEditable.value.substring(start, end);
-              const fixedText = await fixGrammarText(selectedText);
-              currentEditable.setRangeText(fixedText, start, end, 'select');
-            }
-          } else if (savedRange) {
-            const selectedText = savedRange.toString();
-            if (selectedText) {
-              const fixedText = await fixGrammarText(selectedText);
-              savedRange.deleteContents();
-              savedRange.insertNode(document.createTextNode(fixedText));
-            }
-          }
-          currentEditable = null;
-          savedInputSelection = null;
-          savedRange = null;
-          hidePopup();
-        });
-        document.body.appendChild(popup);
-      }
-      popup.style.left = `${rect.left + window.scrollX}px`;
-      popup.style.top = `${rect.top + window.scrollY - 30}px`;
-      popup.style.display = 'block';
-    } else {
-      currentEditable = null;
-      savedInputSelection = null;
-      savedRange = null;
-      hidePopup();
-    }
-  } else {
+// Inspects a live Selection object and, if it sits inside an editable
+// element (input, textarea, or contenteditable), updates the module-level
+// currentEditable/savedInputSelection/savedRange state. Returns true if an
+// editable selection was found, false otherwise (and clears the state).
+function captureSelectionFromEditable(selection) {
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
     currentEditable = null;
     savedInputSelection = null;
     savedRange = null;
-    hidePopup();
+    return false;
+  }
+
+  const range = selection.getRangeAt(0);
+  let editableElement = null;
+  let node = range.commonAncestorContainer;
+  if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+  while (node) {
+    if (isEditable(node)) {
+      editableElement = node;
+      break;
+    }
+    if (node === document.body || node === document) break;
+    // Cross out of a shadow tree (many web-component-based editors render
+    // their editable area inside a shadow root) instead of stopping dead
+    // once parentNode returns null at the shadow root boundary.
+    node = node.parentNode || (node instanceof ShadowRoot ? node.host : null);
+  }
+
+  if (!editableElement) {
+    currentEditable = null;
+    savedInputSelection = null;
+    savedRange = null;
+    return false;
+  }
+
+  currentEditable = editableElement;
+  if (currentEditable.tagName === 'INPUT' || currentEditable.tagName === 'TEXTAREA') {
+    savedInputSelection = {
+      start: currentEditable.selectionStart,
+      end: currentEditable.selectionEnd
+    };
+    savedRange = null;
+  } else {
+    savedInputSelection = null;
+    savedRange = range.cloneRange();
+  }
+  return true;
+}
+
+
+// ─── Grammar/tone fixing ─────────────────────────────────────────────────────
+// The actual API calls run in the background service worker (background.js),
+// not here, because fetch() in a content script is subject to the host
+// page's Content-Security-Policy and can be silently blocked on some sites.
+async function fixGrammarText(text, tone = 'fix') {
+  if (!text) return text;
+  const response = await chrome.runtime.sendMessage({ action: 'fixText', text, tone });
+  if (response?.error) {
+    throw new Error(response.error);
+  }
+  return response?.fixedText ?? text;
+}
+
+// Shows a small dismissible toast near the bottom-right of the page so
+// failures (bad API key, wrong model, quota, network, etc.) are visible
+// instead of silently leaving the selected text unchanged.
+function showToast(message, isError = true) {
+  ensureProcessingStyles();
+
+  const toast = document.createElement('div');
+  toast.className = 'fixgrammar-toast';
+
+  const icon = document.createElement('span');
+  icon.className = 'fixgrammar-toast-icon';
+  icon.textContent = isError ? '⚠️' : '✅';
+
+  const text = document.createElement('span');
+  text.textContent = message;
+
+  toast.appendChild(icon);
+  toast.appendChild(text);
+  Object.assign(toast.style, {
+    background: isError ? '#fdecea' : '#e6f4ea',
+    color: isError ? '#a30d11' : '#137333',
+    border: `2px solid ${isError ? '#f5a19c' : '#8fd3a1'}`,
+  });
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('fixgrammar-toast-hide');
+    setTimeout(() => toast.remove(), 200);
+  }, 7000);
+}
+
+// ─── Processing indicator ───────────────────────────────────────────────────
+// A small pill shown near the bottom-right of the page while a fix/rewrite
+// request is in flight, so the user gets instant feedback that something is
+// happening after picking a context menu item.
+let processingIndicator = null;
+
+function ensureProcessingStyles() {
+  if (document.getElementById('fixgrammar-processing-style')) return;
+  const style = document.createElement('style');
+  style.id = 'fixgrammar-processing-style';
+  style.textContent = `
+    .fixgrammar-processing {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 24px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.98);
+      color: #202124;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22), 0 0 0 2px rgba(66, 133, 244, 0.25);
+      animation: fixgrammar-fade-in 0.18s ease-out;
+    }
+    @media (prefers-color-scheme: dark) {
+      .fixgrammar-processing {
+        background: rgba(32, 33, 36, 0.98);
+        color: #e8eaed;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(66, 133, 244, 0.35);
+      }
+    }
+    .fixgrammar-spinner {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #4285f4, #9b72cb, #d96570, #4285f4);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+      animation: fixgrammar-spin 0.8s linear infinite;
+    }
+    @keyframes fixgrammar-spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes fixgrammar-fade-in {
+      from { opacity: 0; transform: translateY(10px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .fixgrammar-toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 420px;
+      padding: 16px 22px;
+      border-radius: 12px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.45;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+      animation: fixgrammar-fade-in 0.18s ease-out;
+    }
+    .fixgrammar-toast-hide {
+      opacity: 0;
+      transform: translateY(10px) scale(0.96);
+      transition: opacity 0.2s ease-in, transform 0.2s ease-in;
+    }
+    .fixgrammar-toast-icon {
+      font-size: 22px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function showProcessingIndicator(tone) {
+  ensureProcessingStyles();
+  if (!processingIndicator) {
+    processingIndicator = document.createElement('div');
+    processingIndicator.className = 'fixgrammar-processing';
+
+    const spinner = document.createElement('div');
+    spinner.className = 'fixgrammar-spinner';
+
+    const label = document.createElement('span');
+    label.className = 'fixgrammar-processing-label';
+
+    processingIndicator.appendChild(spinner);
+    processingIndicator.appendChild(label);
+    document.body.appendChild(processingIndicator);
+  }
+
+  const label = processingIndicator.querySelector('.fixgrammar-processing-label');
+  label.textContent = tone && tone !== 'fix'
+    ? `Rewriting (${tone.charAt(0).toUpperCase()}${tone.slice(1)})…`
+    : 'Fixing grammar…';
+  processingIndicator.style.display = 'flex';
+}
+
+function hideProcessingIndicator() {
+  if (processingIndicator) processingIndicator.style.display = 'none';
+}
+
+// ─── Apply the fix to the current selection, triggered by the right-click
+// context menu. `tone` defaults to a plain grammar fix; the context menu's
+// tone items pass a specific tone instead. ─────────────────────────────────
+async function applyGrammarFix(tone = 'fix') {
+  // Capture the current selection now, at the moment the context menu item
+  // is clicked, since nothing tracks it proactively any more.
+  captureSelectionFromEditable(window.getSelection());
+
+  if (!currentEditable) {
+    showToast('Select text inside an input, textarea, or editable field, then try again.');
+    return;
+  }
+
+  showProcessingIndicator(tone);
+  try {
+    if (currentEditable.tagName === 'INPUT' || currentEditable.tagName === 'TEXTAREA') {
+      const start = savedInputSelection?.start;
+      const end = savedInputSelection?.end;
+      if (start != null && end != null && start !== end) {
+        const selectedText = currentEditable.value.substring(start, end);
+        const fixedText = await fixGrammarText(selectedText, tone);
+        currentEditable.setRangeText(fixedText, start, end, 'select');
+      }
+    } else if (savedRange) {
+      const selectedText = savedRange.toString();
+      if (selectedText) {
+        const fixedText = await fixGrammarText(selectedText, tone);
+        savedRange.deleteContents();
+        savedRange.insertNode(document.createTextNode(fixedText));
+      }
+    }
+  } catch (error) {
+    showToast(`FixGrammar error: ${error.message}`);
+  } finally {
+    hideProcessingIndicator();
+  }
+
+  currentEditable = null;
+  savedInputSelection = null;
+  savedRange = null;
+}
+
+// Triggered by background.js when the user picks "Fix Grammar" or a
+// tone item from the right-click context menu.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.action === 'fixGrammarSelection') {
+    applyGrammarFix(message.tone || 'fix')
+      .then(() => sendResponse({ success: true }))
+      .catch((error) => {
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // keep the message channel open for the async response
   }
 });
 
-function hidePopup() {
-  if (popup) {
-    popup.style.display = 'none';
-  }
-}
