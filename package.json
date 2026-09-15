@@ -1,13 +1,18 @@
 {
-  "name": "fixgrammar-tests",
+  "name": "fixgrammar",
   "version": "1.0.0",
   "private": true,
+  "description": "Build tooling for the FixGrammar Chrome extension (signed CRX3 packaging).",
   "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:crx": "node scripts/build.mjs",
     "test": "node tests/test_runner.js --all",
-    "test:api": "npm test",
-    "build:crx": "mkdir -p release && npx crx pack build --output release/fixgrammar-chrome-extension.crx --zip-output release/fixgrammar-chrome-extension.zip --private-key release/key.pem"
+    "test:api": "npm test"
   },
   "devDependencies": {
-    "crx": "^5.0.1"
+    "crx3": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

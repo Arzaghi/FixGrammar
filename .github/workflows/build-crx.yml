@@ -1,0 +1,169 @@
+name: Release on version tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Extract and validate the tag version
+      - name: Validate and extract tag version
+        id: tag
+        shell: bash
+        run: |
+          TAG="${{ github.ref }}"
+          TAG="${TAG#refs/tags/}"
+          
+          # Validate tag format: vX.Y.Z
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Error: Git tag '$TAG' does not match expected format vX.Y.Z (e.g., v1.0.0)"
+            exit 1
+          fi
+          
+          # Extract version without 'v' prefix
+          TAG_VERSION="${TAG#v}"
+          echo "tag_version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG" >> "$GITHUB_OUTPUT"
+          echo "✓ Tag validated: $TAG → version $TAG_VERSION"
+
+      # Read and validate the manifest version
+      - name: Read manifest version
+        id: manifest
+        shell: bash
+        run: |
+          if [ ! -f "extension/manifest.json" ]; then
+            echo "❌ Error: extension/manifest.json not found"
+            exit 1
+          fi
+          
+          MANIFEST_VERSION=$(jq -r '.version' extension/manifest.json 2>/dev/null)
+          
+          if [ -z "$MANIFEST_VERSION" ] || [ "$MANIFEST_VERSION" = "null" ]; then
+            echo "❌ Error: extension/manifest.json does not define a version"
+            exit 1
+          fi
+          
+          # Validate version format: X.Y.Z
+          if ! [[ "$MANIFEST_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Error: manifest.json version '$MANIFEST_VERSION' is not a valid Chrome extension version"
+            echo "Expected format: X.Y.Z (e.g., 1.0.0)"
+            exit 1
+          fi
+          
+          echo "manifest_version=$MANIFEST_VERSION" >> "$GITHUB_OUTPUT"
+          echo "✓ Manifest version: $MANIFEST_VERSION"
+
+      # Validate that tag version matches manifest version
+      - name: Validate version match
+        shell: bash
+        run: |
+          TAG_VERSION="${{ steps.tag.outputs.tag_version }}"
+          MANIFEST_VERSION="${{ steps.manifest.outputs.manifest_version }}"
+          
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "❌ Error: Git tag version does not match manifest version"
+            echo "  Tag:      ${{ steps.tag.outputs.tag_name }} → $TAG_VERSION"
+            echo "  Manifest: $MANIFEST_VERSION"
+            echo ""
+            echo "Release tag must exactly match the version in extension/manifest.json."
+            echo "Please correct the tag or manifest.json version."
+            exit 1
+          fi
+          
+          echo "✓ Versions match: $TAG_VERSION"
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Restore the extension private key from GitHub Secrets
+      - name: Restore extension private key
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.EXTENSION_PRIVATE_KEY }}" ]; then
+            echo "❌ Error: EXTENSION_PRIVATE_KEY repository secret not set."
+            echo "Please add your base64-encoded extension.pem as a repository secret."
+            exit 1
+          fi
+          printf '%s' "${{ secrets.EXTENSION_PRIVATE_KEY }}" | base64 -d > extension.pem
+          chmod 600 extension.pem
+          echo "✓ Private key restored"
+
+      # Build the signed CRX3 and ZIP
+      - name: Build signed CRX3 and ZIP
+        shell: bash
+        run: npm run build
+
+      # Verify that the build artifacts were created
+      - name: Verify build artifacts
+        shell: bash
+        run: |
+          VERSION="${{ steps.manifest.outputs.manifest_version }}"
+          
+          # Check that all expected artifacts exist
+          [ -f "dist/FixGrammar-v${VERSION}.crx" ] || {
+            echo "❌ Error: CRX file not created at dist/FixGrammar-v${VERSION}.crx"
+            exit 1
+          }
+          
+          [ -f "dist/FixGrammar-v${VERSION}.zip" ] || {
+            echo "❌ Error: ZIP file not created at dist/FixGrammar-v${VERSION}.zip"
+            exit 1
+          }
+          
+          echo "✓ All build artifacts verified"
+          echo "  - dist/FixGrammar-v${VERSION}.crx"
+          echo "  - dist/FixGrammar-v${VERSION}.zip"
+
+      # Upload build artifacts to GitHub Actions for easy access
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: FixGrammar-v${{ steps.manifest.outputs.manifest_version }}
+          path: |
+            dist/FixGrammar-v${{ steps.manifest.outputs.manifest_version }}.crx
+            dist/FixGrammar-v${{ steps.manifest.outputs.manifest_version }}.zip
+          if-no-files-found: error
+
+      # Create GitHub Release and attach artifacts
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: FixGrammar ${{ steps.tag.outputs.tag_name }}
+          body: |
+            ## Release ${{ steps.tag.outputs.tag_name }}
+
+            Released from tag matching manifest version `${{ steps.manifest.outputs.manifest_version }}`.
+
+            ### Artifacts
+
+            - **FixGrammar-v${{ steps.manifest.outputs.manifest_version }}.crx** — Signed CRX3 package
+              - Installable via sideloading or enterprise policy
+              - For local testing or private distribution
+
+            - **FixGrammar-v${{ steps.manifest.outputs.manifest_version }}.zip** — Web Store package
+              - Upload this to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
+              - Use this to publish updates
+
+          files: |
+            dist/FixGrammar-v${{ steps.manifest.outputs.manifest_version }}.crx
+            dist/FixGrammar-v${{ steps.manifest.outputs.manifest_version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
