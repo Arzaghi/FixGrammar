@@ -10,8 +10,6 @@
     :root {
       --bg-primary: #f8f9fa;
       --text-primary: #1f2328;
-      --text-secondary: #57606a;
-      --text-muted: #6e7781;
       --card-bg: #ffffff;
       --card-border: #e1e4e8;
       --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -55,51 +53,20 @@
       overflow-y: auto;
     }
 
-    /* ── Header ──────────────────────────────────────────────────── */
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-    .gemini-icon {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-    .app-icon {
-      width: 22px;
-      height: 22px;
-      flex-shrink: 0;
-      border-radius: 6px;
-    }
-    .logo {
-      font-size: 20px;
-      font-weight: 700;
-      color: #4285f4;
-      letter-spacing: -0.5px;
-    }
-    .subtitle {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-    }
-
     .icon-btn {
-      margin-left: auto;
-      min-width: 82px;
-      height: 34px;
+      min-width: 70px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
       flex-shrink: 0;
-      padding: 0 10px;
-      border-radius: 8px;
+      padding: 0 8px;
+      border-radius: 7px;
       border: 1px solid var(--card-border);
       background: var(--card-bg);
       color: var(--text-secondary);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.2s;
@@ -110,7 +77,7 @@
       color: #4285f4;
       transform: translateY(-1px);
     }
-    .settings-icon { font-size: 15px; line-height: 1; }
+    .settings-icon { font-size: 13px; line-height: 1; }
 
     /* ── Status bar ──────────────────────────────────────────────── */
     .status-bar {
@@ -210,7 +177,7 @@
     .tone-label { display: block; margin-bottom: 7px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); font-weight: 600; }
     .tone-buttons {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 7px;
     }
     .tone-button {
@@ -384,8 +351,29 @@
 
     .actions-row {
       display: flex;
+      align-items: stretch;
       gap: 8px;
       margin-top: 12px;
+    }
+    .actions-row .icon-btn {
+      min-width: 0;
+      height: auto;
+      margin-left: 0;
+      padding: 10px 14px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      transform: none;
+      transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+    }
+    .actions-row .icon-btn:hover {
+      border-color: #4285f4;
+      background: var(--input-bg);
+      color: #4285f4;
+      transform: none;
     }
     button {
       font-family: inherit;
@@ -457,13 +445,6 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <img class="app-icon" src="icons/icon128.png" alt="" width="22" height="22">
-    <span class="logo">FixGrammar</span>
-    <button class="icon-btn" id="settingsBtn" title="Open extension settings" aria-label="Open extension settings" type="button"><span class="settings-icon" aria-hidden="true">⚙</span><span>Settings</span></button>
-  </div>
-  <div class="subtitle">Translate &amp; rewrite text with Gemini</div>
-
   <div class="status-bar" id="statusBar">
     <svg class="gemini-status-icon" id="statusDot" viewBox="0 0 24 24" aria-hidden="true">
       <defs>
@@ -527,7 +508,7 @@
           <span class="tone-name">Casual</span>
         </button>
         <button class="tone-button" data-tone="friendly" title="Warm and friendly" type="button">
-          <span class="tone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.5c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8M9 10h.01M15 10h.01"/></svg></span>
+          <span class="tone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5S4.5 16.2 4.5 10.2A4.2 4.2 0 0 1 12 7.8a4.2 4.2 0 0 1 7.5 2.4c0 6-7.5 10.3-7.5 10.3Z"/><path d="M8.5 12h.01M15.5 12h.01"/></svg></span>
           <span class="tone-name">Friendly</span>
         </button>
         <button class="tone-button" data-tone="professional" title="Business professional" type="button">
@@ -538,6 +519,14 @@
           <span class="tone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M5 12h10M5 17h6"/><path d="m17 15 2 2 3-4"/></svg></span>
           <span class="tone-name">Brief</span>
           </button>
+        <button class="tone-button" data-tone="email" title="Format as a standard email" type="button">
+          <span class="tone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m5 7 7 5 7-5M5 17l4-4M19 17l-4-4"/></svg></span>
+          <span class="tone-name">Email</span>
+        </button>
+        <button class="tone-button" data-tone="funny" title="Add light, appropriate humor" type="button">
+          <span class="tone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8 14c1 1.5 2.3 2.2 4 2.2s3-.7 4-2.2M8.5 9.5h.01M15.5 9.5h.01"/></svg></span>
+          <span class="tone-name">Funny</span>
+        </button>
         </div>
       </div>
     </div>
@@ -546,6 +535,7 @@
   <div class="actions-row">
     <button class="translate-btn" id="translateBtn"><span class="btn-spinner"></span><span id="translateBtnText">Translate</span></button>
     <button class="undo-btn" id="undoBtn" disabled title="Revert to original text">↩ Undo</button>
+    <button class="icon-btn" id="settingsBtn" title="Open extension settings" aria-label="Open extension settings" type="button"><span class="settings-icon" aria-hidden="true">⚙</span><span>Settings</span></button>
   </div>
 
   <script src="models.js"></script>

@@ -25,6 +25,7 @@ const TONE_PRESETS = {
   friendly: 'Fix grammar, spelling, and punctuation errors, then rewrite the text in a warm, friendly tone.',
   professional: 'Fix grammar, spelling, and punctuation errors, then rewrite the text in a polished, business-professional tone.',
   concise: 'Fix grammar, spelling, and punctuation errors, then rewrite the text to be more concise and to the point.',
+  funny: 'Fix grammar, spelling, and punctuation errors, then rewrite the text with appropriate, light humor while preserving its meaning.',
 };
 
 const TRANSLATE_TONE_PRESETS = {
@@ -34,6 +35,7 @@ const TRANSLATE_TONE_PRESETS = {
   friendly: 'Use a warm, friendly tone.',
   professional: 'Use a polished, business-professional tone.',
   concise: 'Make the translation concise and to the point.',
+  funny: 'Use appropriate, light humor while preserving the meaning of the original text.',
 };
 
 function buildPrompt(text, tone) {
@@ -55,6 +57,17 @@ function buildTranslatePrompt(text, targetLanguage, tone) {
 Text: "${text}"
 
 Translation:`;
+}
+
+function buildEmailPrompt(text, targetLanguage) {
+  const languageInstruction = targetLanguage === AUTO_LANGUAGE
+    ? 'Detect the language of the input and write the email in that same language.'
+    : `Write the email in ${targetLanguage}.`;
+  return `Transform the following text into a clear, complete email. ${languageInstruction} Correct grammar and spelling, preserve the intended meaning, and use a standard email format with a suitable subject line, greeting, concise body, and professional closing. Return ONLY the email, without explanations or surrounding quotation marks.
+
+Text: "${text}"
+
+Email:`;
 }
 
 function stripSurroundingQuotes(value) {
@@ -117,11 +130,18 @@ async function translateText(text, targetLanguage, tone) {
   return await callGemini(buildTranslatePrompt(text, targetLanguage, tone), apiKey, model);
 }
 
+async function emailText(text, targetLanguage) {
+  const [apiKey, model] = await Promise.all([getGeminiApiKey(), getGeminiModel()]);
+  return await callGemini(buildEmailPrompt(text, targetLanguage), apiKey, model);
+}
+
 // Handles requests from popup.js (translate & rewrite box) to run Gemini calls here in the
 // service worker, away from any page's CSP.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.action === 'translateText') {
-    const request = message.targetLanguage === AUTO_LANGUAGE
+    const request = message.tone === 'email'
+      ? emailText(message.text, message.targetLanguage)
+      : message.targetLanguage === AUTO_LANGUAGE
       ? fixGrammarText(message.text, message.tone || 'neutral')
       : translateText(message.text, message.targetLanguage, message.tone || 'neutral');
     request

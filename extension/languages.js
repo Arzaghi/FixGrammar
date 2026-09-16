@@ -29,6 +29,5 @@ const LANGUAGES = [
   'Yucatec Maya', 'Zulu',
 ];
 
-const DEFAULT_LANGUAGE = 'English';
 const AUTO_LANGUAGE = 'auto';
-const DEFAULT_FAVORITE_LANGUAGES = ['English', 'French', 'Spanish'];
+const DEFAULT_FAVORITE_LANGUAGES = ['English'];

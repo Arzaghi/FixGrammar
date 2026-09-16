@@ -46,7 +46,7 @@ function renderFavorites() {
 
 function updateActionLabel() {
   if (!translateBtnText || translateBtn.classList.contains('loading')) return;
-  translateBtnText.textContent = targetLanguage === AUTO_LANGUAGE ? 'Rewrite' : 'Translate';
+  translateBtnText.textContent = 'Rewrite';
 }
 
 async function selectLanguage(language) {
@@ -108,7 +108,7 @@ function setUndoEnabled(enabled) {
 function setLoading(isLoading) {
   translateBtn.disabled = isLoading;
   translateBtn.classList.toggle('loading', isLoading);
-  translateBtnText.textContent = isLoading ? 'Working…' : (targetLanguage === AUTO_LANGUAGE ? 'Rewrite' : 'Translate');
+  translateBtnText.textContent = isLoading ? 'Working…' : 'Rewrite';
   loadingOverlay.classList.toggle('visible', isLoading);
   textInput.readOnly = isLoading;
 }
@@ -196,6 +196,7 @@ toneButtons.addEventListener('click', (event) => {
   const button = event.target.closest('.tone-button');
   if (!button) return;
   selectedTone = button.dataset.tone;
+  updateActionLabel();
   renderToneButtons();
 });
 

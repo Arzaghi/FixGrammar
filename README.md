@@ -14,7 +14,7 @@ toolbar side panel — with optional tone rewrites and translation.
 - Toolbar side panel with a text box to translate and rewrite text, with one-click **Undo** back to the original text
 - **Auto** target mode to correct and rewrite text without changing its original language
 - Settings page with a searchable favorite-language picker; English, French, and Spanish are selected by default
-- Graphical tone controls for Neutral, Formal, Casual, Friendly, Professional, and Concise writing
+- Graphical tone controls for Neutral, Formal, Casual, Friendly, Professional, Concise, Email, and Funny writing
 - The side panel adapts to its available width and remains usable at short heights
 - Automatic light/dark theme that follows your system preference
 - No remotely hosted executable code
@@ -45,7 +45,8 @@ After changing extension files, click **Reload** on the extension card in
 2. If the key is not configured, click **Open Settings**, add your Gemini API key, and save.
 3. Type or paste text into the box, then choose a favorite target language and tone.
 4. Choose **Auto** to correct and rewrite the text while keeping its original language. For another language, choose that language and click **Translate**.
-5. The result replaces the text in the same box. Click **Undo** to revert to the original text.
+5. Choose **Email** to format the text as a standard email in the selected language, or choose **Funny** for light, appropriate humor.
+6. The result replaces the text in the same box. Click **Undo** to revert to the original text.
 
 ## Project structure
 
