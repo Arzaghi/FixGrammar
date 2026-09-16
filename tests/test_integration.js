@@ -3,19 +3,19 @@
 // FixGrammar API Integration Test
 // ============================================================================
 // Sends a single trivial request to the Gemini API (the only backend this
-// extension uses) and confirms a valid response comes back. This is a
-// connectivity smoke test only — it does not validate grammar-correction
-// quality.
+// extension uses) for every model listed in extension/models.js, and confirms
+// a valid response comes back from each. This is a connectivity smoke test
+// only — it does not validate grammar-correction quality.
 
 const https = require('https');
+const path = require('path');
+const { GEMINI_MODELS } = require(path.join(__dirname, '..', 'extension', 'models.js'));
 
-const MODEL = 'gemini-3.6-flash';
-
-function callGeminiApi(text, apiKey) {
+function callGeminiApi(model, text, apiKey) {
   return new Promise((resolve, reject) => {
     const requestBody = { contents: [{ parts: [{ text }] }] };
 
-    const url = new URL(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`);
+    const url = new URL(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`);
 
     const options = {
       hostname: url.hostname,
@@ -60,25 +60,38 @@ async function main() {
   console.log('FixGrammar API Integration Test');
   console.log('================================');
 
-  try {
-    const apiResponse = await callGeminiApi('Say "OK".', apiKey);
+  let failed = 0;
 
-    if (apiResponse.error) {
-      console.log(`✗ Gemini API returned an error: ${apiResponse.error.message || JSON.stringify(apiResponse.error)}`);
-      process.exit(1);
-    }
+  for (const model of GEMINI_MODELS) {
+    try {
+      const apiResponse = await callGeminiApi(model.id, 'Say "OK".', apiKey);
 
-    const text = apiResponse?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (text) {
-      console.log(`✓ Connected to Gemini API successfully. Response: "${text.trim()}"`);
-      process.exit(0);
-    } else {
-      console.log('✗ No response content found in Gemini API reply');
-      console.log(JSON.stringify(apiResponse));
-      process.exit(1);
+      if (apiResponse.error) {
+        console.log(`✗ ${model.id}: Gemini API returned an error: ${apiResponse.error.message || JSON.stringify(apiResponse.error)}`);
+        failed++;
+        continue;
+      }
+
+      const text = apiResponse?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        console.log(`✓ ${model.id}: connected successfully. Response: "${text.trim()}"`);
+      } else {
+        console.log(`✗ ${model.id}: no response content found in Gemini API reply`);
+        console.log(JSON.stringify(apiResponse));
+        failed++;
+      }
+    } catch (error) {
+      console.log(`✗ ${model.id}: failed to reach Gemini API: ${error.message}`);
+      failed++;
     }
-  } catch (error) {
-    console.log(`✗ Failed to reach Gemini API: ${error.message}`);
+  }
+
+  console.log('================================');
+  if (failed === 0) {
+    console.log(`All ${GEMINI_MODELS.length} model(s) passed.`);
+    process.exit(0);
+  } else {
+    console.log(`${failed}/${GEMINI_MODELS.length} model(s) failed.`);
     process.exit(1);
   }
 }

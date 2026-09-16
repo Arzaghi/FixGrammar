@@ -18,12 +18,8 @@
       --input-bg: #fafafa;
       --input-border: #dadce0;
       --divider: #eaecef;
-      --footer-bg: #ffffff;
-      --footer-border: #d0d7de;
-      --footer-color: #57606a;
-      --footer-hover-bg: #e8f0fe;
-      --footer-hover-border: #4285f4;
-      --footer-hover-color: #1a56db;
+      --status-bg: #ffffff;
+      --status-border: #e1e4e8;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -38,12 +34,8 @@
         --input-bg: #12141c;
         --input-border: #2e3346;
         --divider: #1e2130;
-        --footer-bg: #1a1d27;
-        --footer-border: #303647;
-        --footer-color: #a8b4cc;
-        --footer-hover-bg: rgba(66, 133, 244, 0.12);
-        --footer-hover-border: rgba(66, 133, 244, 0.45);
-        --footer-hover-color: #6ea8fe;
+        --status-bg: #1a1d27;
+        --status-border: #252836;
       }
     }
 
@@ -84,6 +76,86 @@
       color: var(--text-muted);
       margin-bottom: 14px;
     }
+
+    .icon-btn {
+      margin-left: auto;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.2s;
+    }
+    .icon-btn:hover {
+      background: rgba(66, 133, 244, 0.1);
+      border-color: #4285f4;
+      color: #4285f4;
+      transform: rotate(20deg);
+    }
+
+    /* ── Status bar ──────────────────────────────────────────────── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      background: var(--status-bg);
+      border: 1px solid var(--status-border);
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .status-bar.warn { border-color: rgba(249, 171, 0, 0.4); cursor: pointer; }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9aa0a6;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .dot.ok { background: #34a853; box-shadow: 0 0 6px rgba(52, 168, 83, 0.4); }
+    .dot.warn {
+      background: #f9ab00;
+      box-shadow: 0 0 6px rgba(249, 171, 0, 0.4);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.45; }
+    }
+    .status-label {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+    .status-label.warn { color: #b06a00; font-weight: 600; }
+    @media (prefers-color-scheme: dark) {
+      .status-label.warn { color: #f9ab00; }
+    }
+    .status-action {
+      display: none;
+      font-size: 11px;
+      font-weight: 700;
+      color: #4285f4;
+      background: rgba(66, 133, 244, 0.1);
+      border: 1px solid rgba(66, 133, 244, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .status-action:hover { background: rgba(66, 133, 244, 0.18); border-color: #4285f4; }
+    .status-action.visible { display: inline-flex; align-items: center; }
 
     /* ── Error banner ────────────────────────────────────────────── */
     .error-banner {
@@ -301,41 +373,21 @@
     }
     .undo-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    /* ── Footer ──────────────────────────────────────────────────── */
-    .footer {
-      display: flex;
-      justify-content: center;
-    }
-    .link-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: var(--footer-bg);
-      border: 1px solid var(--footer-border);
-      border-radius: 8px;
-      box-shadow: var(--card-shadow);
-      color: var(--footer-color);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 9px 12px;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
-    }
-    .link-btn:hover {
-      background: var(--footer-hover-bg);
-      border-color: var(--footer-hover-border);
-      color: var(--footer-hover-color);
-    }
   </style>
 </head>
 <body>
   <div class="header">
     <img class="app-icon" src="icons/icon128.png" alt="" width="22" height="22">
     <span class="logo">FixGrammar</span>
+    <button class="icon-btn" id="settingsBtn" title="Open extension settings" type="button">⚙</button>
   </div>
   <div class="subtitle">Translate &amp; rewrite text with Gemini</div>
+
+  <div class="status-bar" id="statusBar">
+    <div class="dot" id="statusDot"></div>
+    <span class="status-label" id="statusLabel">Ready</span>
+    <button class="status-action" id="statusAction" type="button">Open Settings</button>
+  </div>
 
   <div class="error-banner" id="errorBanner">
     <span class="error-text" id="errorText"></span>
@@ -376,10 +428,6 @@
       <button class="translate-btn" id="translateBtn"><span class="btn-spinner"></span><span id="translateBtnText">Translate</span></button>
       <button class="undo-btn" id="undoBtn" disabled title="Revert to original text">↩ Undo</button>
     </div>
-  </div>
-
-  <div class="footer">
-    <button class="link-btn" id="settingsBtn" title="Open extension settings">⚙ <span>Settings</span></button>
   </div>
 
   <script src="popup.js"></script>

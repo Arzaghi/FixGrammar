@@ -33,6 +33,10 @@ const DEFAULT_LANGUAGE = 'English';
 
 const errorBanner      = document.getElementById('errorBanner');
 const errorText        = document.getElementById('errorText');
+const statusBar         = document.getElementById('statusBar');
+const statusDot         = document.getElementById('statusDot');
+const statusLabel       = document.getElementById('statusLabel');
+const statusAction      = document.getElementById('statusAction');
 const textInput        = document.getElementById('textInput');
 const copyBtn          = document.getElementById('copyBtn');
 const loadingOverlay   = document.getElementById('loadingOverlay');
@@ -68,6 +72,14 @@ function showError(message) {
 
 function hideError() {
   errorBanner.classList.remove('visible');
+}
+
+function setApiKeyStatus(configured) {
+  statusDot.className = 'dot ' + (configured ? 'ok' : 'warn');
+  statusLabel.textContent = configured ? 'Ready' : 'API key required';
+  statusLabel.classList.toggle('warn', !configured);
+  statusBar.classList.toggle('warn', !configured);
+  statusAction.classList.toggle('visible', !configured);
 }
 
 function setUndoEnabled(enabled) {
@@ -154,11 +166,32 @@ settingsBtn.addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
 });
 
+statusAction.addEventListener('click', () => {
+  chrome.runtime.openOptionsPage();
+});
+
+statusBar.addEventListener('click', (event) => {
+  if (statusBar.classList.contains('warn') && event.target !== statusAction) {
+    chrome.runtime.openOptionsPage();
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'sync') return;
+  if (changes.geminiApiKey || changes.apiKeys) {
+    chrome.storage.sync.get({ geminiApiKey: '', apiKeys: {} }).then(({ geminiApiKey, apiKeys }) => {
+      setApiKeyStatus(!!(geminiApiKey || apiKeys?.gemini));
+    });
+  }
+});
+
 async function init() {
   populateLanguages();
 
   const { geminiApiKey, apiKeys } = await chrome.storage.sync.get({ geminiApiKey: '', apiKeys: {} });
-  if (!geminiApiKey && !apiKeys?.gemini) {
+  const configured = !!(geminiApiKey || apiKeys?.gemini);
+  setApiKeyStatus(configured);
+  if (!configured) {
     showError('Add your Gemini API key in Settings to enable translation.');
   }
 }

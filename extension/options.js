@@ -5,10 +5,25 @@ let dirty = false;
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 const geminiKey   = document.getElementById('geminiKey');
+const geminiModel = document.getElementById('geminiModel');
+const modelHint   = document.getElementById('modelHint');
 const saveBtn     = document.getElementById('saveBtn');
 const saveMsg     = document.getElementById('saveMsg');
 const versionSpan = document.getElementById('versionSpan');
 const versionText = document.getElementById('version');
+
+// ─── Populate model dropdown ───────────────────────────────────────────────────
+for (const model of GEMINI_MODELS) {
+  const option = document.createElement('option');
+  option.value = model.id;
+  option.textContent = model.label;
+  geminiModel.appendChild(option);
+}
+
+function updateModelHint() {
+  const selected = GEMINI_MODELS.find((m) => m.id === geminiModel.value);
+  modelHint.textContent = selected?.description || '';
+}
 
 // ─── Display extension version ─────────────────────────────────────────────────
 if (versionText) {
@@ -30,6 +45,10 @@ document.querySelectorAll('.eye-btn').forEach((btn) => {
 });
 
 geminiKey.addEventListener('input', markDirty);
+geminiModel.addEventListener('change', () => {
+  updateModelHint();
+  markDirty();
+});
 
 // ─── Dirty tracking & Save ────────────────────────────────────────────────────
 function markDirty() {
@@ -43,6 +62,7 @@ function markDirty() {
 async function saveAllSettings() {
   await chrome.storage.sync.set({
     geminiApiKey: geminiKey.value.trim(),
+    geminiModel: geminiModel.value,
   });
   dirty = false;
   saveBtn.disabled = true;
@@ -58,7 +78,10 @@ saveBtn.addEventListener('click', saveAllSettings);
   const s = await chrome.storage.sync.get({
     geminiApiKey: '',
     apiKeys: {}, // legacy shape, used as a fallback for existing installs
+    geminiModel: DEFAULT_GEMINI_MODEL,
   });
 
   geminiKey.value = s.geminiApiKey || s.apiKeys?.gemini || '';
+  geminiModel.value = s.geminiModel || DEFAULT_GEMINI_MODEL;
+  updateModelHint();
 })();

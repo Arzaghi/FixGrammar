@@ -1,3 +1,6 @@
+// Shared Gemini model catalog (GEMINI_MODELS, DEFAULT_GEMINI_MODEL).
+importScripts('models.js');
+
 // Tones offered as top-level context menu items alongside "Fix Grammar".
 // "Just fix grammar" is the plain "Fix Grammar" action, so it isn't repeated here.
 const TONE_MENU_ITEMS = [
@@ -122,10 +125,18 @@ function getGeminiApiKey() {
   });
 }
 
-async function callGemini(prompt, apiKey) {
+function getGeminiModel() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get({ geminiModel: DEFAULT_GEMINI_MODEL }, (items) => {
+      resolve(items.geminiModel || DEFAULT_GEMINI_MODEL);
+    });
+  });
+}
+
+async function callGemini(prompt, apiKey, model) {
   if (!apiKey) throw new Error('No Gemini API key configured. Add one in Settings.');
 
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model || DEFAULT_GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
   const response = await fetch(apiUrl, {
     method: 'POST',
@@ -146,13 +157,13 @@ async function callGemini(prompt, apiKey) {
 }
 
 async function fixGrammarText(text, tone) {
-  const apiKey = await getGeminiApiKey();
-  return await callGemini(buildPrompt(text, tone), apiKey);
+  const [apiKey, model] = await Promise.all([getGeminiApiKey(), getGeminiModel()]);
+  return await callGemini(buildPrompt(text, tone), apiKey, model);
 }
 
 async function translateText(text, targetLanguage, tone) {
-  const apiKey = await getGeminiApiKey();
-  return await callGemini(buildTranslatePrompt(text, targetLanguage, tone), apiKey);
+  const [apiKey, model] = await Promise.all([getGeminiApiKey(), getGeminiModel()]);
+  return await callGemini(buildTranslatePrompt(text, targetLanguage, tone), apiKey, model);
 }
 
 // Handles requests from content.js (floating icon / context menu) and

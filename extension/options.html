@@ -121,6 +121,22 @@
       box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.18);
     }
 
+    select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--input-bg);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    select:focus {
+      border-color: #4285f4;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.18);
+    }
+
     .eye-btn {
       position: absolute;
       right: 10px;
@@ -271,8 +287,15 @@
         <div class="hint">Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio ↗</a></div>
       </div>
 
+      <div class="field">
+        <label for="geminiModel">Model</label>
+        <select id="geminiModel"></select>
+        <div class="hint" id="modelHint"></div>
+      </div>
+
       <p class="tone-note" id="toneNote">Right-click selected text to fix its grammar, or rewrite it as <strong>Formal</strong>, <strong>Casual</strong>, <strong>Friendly</strong>, <strong>Professional</strong>, or <strong>Concise</strong>. Use the toolbar popup to translate and rewrite any text into another language.</p>
     </div>
+
 
     <div class="save-section">
       <button class="save-btn" id="saveBtn" disabled>💾 Save Settings</button>
@@ -298,6 +321,7 @@
     </footer>
 
   </div>
+  <script src="models.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

@@ -33,7 +33,7 @@ text into another language.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
 5. Select the [`extension`](./extension) directory — not the repository root.
-6. Click the extension's toolbar icon to see the popup, then open **Settings** to enter your Gemini API key.
+6. Click the extension's toolbar icon to see the popup, then open **Settings** to enter your Gemini API key and pick a model.
 
 After changing extension files, click **Reload** on the extension card in
 `chrome://extensions` before testing again.
@@ -60,7 +60,8 @@ extension/
   background.js          Manifest V3 service worker (builds the context menu, forwards clicks to the content script, runs all Gemini API calls)
   content.js              Content script: selection capture, processing indicator, applies grammar/tone fixes to the page
   popup.html / popup.js   Toolbar popup — translate & rewrite text box, with Undo
-  options.html / options.js  Settings page — Gemini API key
+  options.html / options.js  Settings page — Gemini API key and model selection
+  models.js               Shared Gemini model catalog (used by background.js and options.js)
   icons/                  Toolbar and extension icons
 scripts/
   build.mjs               Builds the extension package (CRX + ZIP)
@@ -140,28 +141,6 @@ Releases are created by pushing a Git tag that matches the version in
    - Chrome Web Store: [Developer Dashboard](https://chrome.google.com/webstore/devconsole)
    - Microsoft Edge Add-ons: [Partner Center](https://partner.microsoft.com/dashboard/microsoftedge/overview)
    - Opera Add-ons: [Developer dashboard](https://addons.opera.com/developer/)
-
-### CRX signing key
-
-To keep a stable extension identity across releases, add your extension
-private key to the repository secrets as a base64-encoded value named
-`EXTENSION_PRIVATE_KEY`:
-
-```bash
-# Linux / macOS
-base64 -w0 extension.pem
-```
-
-```powershell
-# Windows (PowerShell)
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("extension.pem"))
-```
-
-- In GitHub, go to `Settings > Secrets and variables > Actions`.
-- Create a new secret named `EXTENSION_PRIVATE_KEY` with the base64 output above.
-
-If the secret is missing, CI will fail the release build rather than silently
-rotate the extension's identity with a throwaway key.
 
 ## Automated API integration tests
 
