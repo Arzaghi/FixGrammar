@@ -5,9 +5,7 @@
   "description": "Build tooling for the FixGrammar Chrome extension (signed CRX3 packaging).",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "build:crx": "node scripts/build.mjs",
-    "test": "node tests/test_runner.js --all",
-    "test:gemini": "npm test"
+    "test": "node tests/test_integration.js"
   },
   "devDependencies": {
     "crx3": "^2.0.0"

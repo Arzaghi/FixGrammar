@@ -1,7 +1,7 @@
 # FixGrammar
 
 [![Latest release](https://img.shields.io/github/v/release/Arzaghi/FixGrammar?logo=github&label=release)](https://github.com/Arzaghi/FixGrammar/releases/latest)
-[![API integration test](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-gemini.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-gemini.yml)
+[![API integration test](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-integration.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-integration.yml)
 [![Build CRX](https://github.com/Arzaghi/FixGrammar/actions/workflows/build-crx.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/build-crx.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
@@ -68,7 +68,7 @@ dist/                     Build output (CRX + ZIP) — gitignored
 tests/                    API integration tests
 package.json              Node build-tool dependencies
 .github/workflows/build-crx.yml  Extension build and GitHub Release workflow
-.github/workflows/test-gemini.yml   Scheduled API integration test workflow
+.github/workflows/test-integration.yml   Scheduled API integration test workflow
 ```
 
 ## Privacy and data handling
@@ -165,17 +165,18 @@ rotate the extension's identity with a throwaway key.
 
 ## Automated API integration tests
 
-[`tests/test_gemini.js`](./tests/test_gemini.js) connects to the real Google
-Gemini API and verifies the extension's grammar-correction prompt still
-produces correct output end to end.
+[`tests/test_integration.js`](./tests/test_integration.js) sends a single
+trivial request to the real Google Gemini API and confirms a valid response
+comes back. This is a connectivity smoke test only — it does not validate
+grammar-correction quality.
 
 Runs on every push to `main` and **daily at 07:00 UTC** to catch external API
 changes even when no code has been pushed.
 
-Run the tests locally (requires a Gemini API key):
+Run it locally (requires a Gemini API key):
 
 ```bash
-node tests/test_runner.js --all --key <your-test-key>
+node tests/test_integration.js --key <your-test-key>
 ```
 
 ---

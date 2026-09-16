@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // ============================================================================
-// FixGrammar Gemini API Connectivity Check
+// FixGrammar API Integration Test
 // ============================================================================
-// Sends a single trivial request to the Gemini API and confirms a valid
-// response comes back. This is a connectivity smoke test only — it does not
-// validate grammar-correction quality.
+// Sends a single trivial request to the Gemini API (the only backend this
+// extension uses) and confirms a valid response comes back. This is a
+// connectivity smoke test only — it does not validate grammar-correction
+// quality.
 
 const https = require('https');
 
@@ -48,18 +49,16 @@ async function main() {
   let apiKey = process.env.GEMINI_API_KEY || '';
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--key' && args[i + 1]) apiKey = args[++i];
+    if ((args[i] === '--key' || args[i] === '--gemini-key') && args[i + 1]) apiKey = args[++i];
   }
 
   if (!apiKey) {
-    console.log('ERROR: Please provide a Gemini API key');
-    console.log('Usage: node test_gemini.js --key YOUR_API_KEY');
-    console.log('Or set the GEMINI_API_KEY environment variable');
-    process.exit(1);
+    console.log('Skipping integration test: provide --key <key> or --gemini-key <key> (or set GEMINI_API_KEY) to run it.');
+    process.exit(0);
   }
 
-  console.log('FixGrammar Gemini API Connectivity Check');
-  console.log('=========================================');
+  console.log('FixGrammar API Integration Test');
+  console.log('================================');
 
   try {
     const apiResponse = await callGeminiApi('Say "OK".', apiKey);

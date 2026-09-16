@@ -2,7 +2,7 @@ name: API Integration Test
 
 # Runs on every push to main, daily at 07:00 UTC, and on manual dispatch.
 # The purpose is to detect external Gemini API regressions even when no code
-# has been pushed (the scheduled run catches changes on the provider's side).
+# has been pushed (the scheduled run catches changes on Google's side).
 on:
   push:
     branches:
@@ -21,16 +21,9 @@ permissions:
 
 jobs:
   api-integration-test:
-    name: Gemini API smoke test
+    name: API integration test
     runs-on: ubuntu-latest
     timeout-minutes: 10   # hard ceiling; the test itself handles per-request timeouts
-    # GEMINI_API_KEY is stored as a GitHub Secret (Settings → Secrets and
-    # variables → Actions → GEMINI_API_KEY). Promoted to a job-level env var
-    # here because the `secrets` context cannot be referenced directly inside
-    # a step's `if:` condition (GitHub Actions only allows it in `env`/`with`
-    # value assignments) — the `env` context, however, IS readable from `if:`.
-    env:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -49,6 +42,7 @@ jobs:
       # variables → Actions → GEMINI_API_KEY). It is passed as an environment
       # variable only — never printed, never echoed, never written to a file,
       # never included in step outputs or artifacts.
-      - name: Run Gemini integration test
-        if: ${{ env.GEMINI_API_KEY != '' }}
-        run: node tests/test_runner.js --all --key "$GEMINI_API_KEY"
+      - name: Run API integration test
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npm test
