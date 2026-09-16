@@ -1,66 +1,17 @@
 // Shared Gemini model catalog (GEMINI_MODELS, DEFAULT_GEMINI_MODEL).
 importScripts('models.js');
+importScripts('languages.js');
 
-// Tones offered as top-level context menu items alongside "Fix Grammar".
-// "Just fix grammar" is the plain "Fix Grammar" action, so it isn't repeated here.
-const TONE_MENU_ITEMS = [
-  { id: 'formal', title: 'Formal' },
-  { id: 'casual', title: 'Casual' },
-  { id: 'friendly', title: 'Friendly' },
-  { id: 'professional', title: 'Professional' },
-  { id: 'concise', title: 'Concise' },
-];
-
-function buildContextMenus() {
-  chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
-      id: 'fixGrammar',
-      title: 'Fix Grammar',
-      contexts: ['selection']
-    });
-
-    for (const tone of TONE_MENU_ITEMS) {
-      chrome.contextMenus.create({
-        id: `tone-${tone.id}`,
-        title: tone.title,
-        contexts: ['selection']
-      });
-    }
-  });
-}
-
-chrome.runtime.onInstalled.addListener(buildContextMenus);
-chrome.runtime.onStartup.addListener(buildContextMenus);
-
-function sendFixMessage(tabId, tone, frameId) {
-  const messageOptions = frameId != null ? { frameId } : undefined;
-
-  chrome.tabs.sendMessage(tabId, { action: 'fixGrammarSelection', tone }, messageOptions).catch(async (error) => {
-    // The content script isn't loaded in this frame yet — most commonly
-    // because the extension was reloaded/updated after the tab was already
-    // open, or the selection is inside an iframe that hadn't been visited
-    // before all_frames injection took effect. Inject it on demand and retry.
-    try {
-      const injectTarget = frameId != null ? { tabId, frameIds: [frameId] } : { tabId };
-      await chrome.scripting.executeScript({ target: injectTarget, files: ['content.js'] });
-      await chrome.tabs.sendMessage(tabId, { action: 'fixGrammarSelection', tone }, messageOptions);
-    } catch (retryError) {
-    }
-  });
-}
-
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  // tab.id can be `chrome.tabs.TAB_ID_NONE` (-1) for surfaces that aren't a
-  // real browser tab (e.g. some PDF viewers, devtools, or other extension
-  // UI) — tabs.sendMessage() throws for negative ids, so bail out early.
-  if (tab?.id == null || tab.id < 0) return;
-
-  if (info.menuItemId === 'fixGrammar') {
-    sendFixMessage(tab.id, 'fix', info.frameId);
-  } else if (typeof info.menuItemId === 'string' && info.menuItemId.startsWith('tone-')) {
-    sendFixMessage(tab.id, info.menuItemId.slice('tone-'.length), info.frameId);
+async function initializeSidePanel() {
+  try {
+    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  } catch (error) {
+    console.warn('Unable to configure the FixGrammar side panel:', error);
   }
-});
+}
+
+chrome.runtime.onInstalled.addListener(initializeSidePanel);
+chrome.runtime.onStartup.addListener(initializeSidePanel);
 
 // ─── Gemini API calls ───────────────────────────────────────────────────────
 // These run in the background service worker (not the page's content script)
@@ -166,19 +117,14 @@ async function translateText(text, targetLanguage, tone) {
   return await callGemini(buildTranslatePrompt(text, targetLanguage, tone), apiKey, model);
 }
 
-// Handles requests from content.js (floating icon / context menu) and
-// popup.js (translate & rewrite box) to run Gemini calls here in the
+// Handles requests from popup.js (translate & rewrite box) to run Gemini calls here in the
 // service worker, away from any page's CSP.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.action === 'fixText') {
-    fixGrammarText(message.text, message.tone || 'fix')
-      .then((fixedText) => sendResponse({ fixedText }))
-      .catch((error) => sendResponse({ error: error.message }));
-    return true; // keep the message channel open for the async response
-  }
-
   if (message?.action === 'translateText') {
-    translateText(message.text, message.targetLanguage, message.tone || 'neutral')
+    const request = message.targetLanguage === AUTO_LANGUAGE
+      ? fixGrammarText(message.text, message.tone || 'neutral')
+      : translateText(message.text, message.targetLanguage, message.tone || 'neutral');
+    request
       .then((translatedText) => sendResponse({ translatedText }))
       .catch((error) => sendResponse({ error: error.message }));
     return true; // keep the message channel open for the async response

@@ -1,47 +1,16 @@
 'use strict';
 
-// All languages Google Translate/Gemini can translate into.
-const LANGUAGES = [
-  'Abkhaz', 'Acehnese', 'Acholi', 'Afrikaans', 'Albanian', 'Alur', 'Amharic', 'Arabic',
-  'Armenian', 'Assamese', 'Awadhi', 'Aymara', 'Azerbaijani', 'Balinese', 'Bambara', 'Bashkir',
-  'Basque', 'Batak Karo', 'Batak Simalungun', 'Batak Toba', 'Belarusian', 'Bemba', 'Bengali',
-  'Betawi', 'Bhojpuri', 'Bikol', 'Bosnian', 'Breton', 'Bulgarian', 'Buryat', 'Cantonese',
-  'Catalan', 'Cebuano', 'Chichewa (Nyanja)', 'Chinese (Simplified)', 'Chinese (Traditional)',
-  'Chuvash', 'Corsican', 'Crimean Tatar', 'Croatian', 'Czech', 'Danish', 'Dinka', 'Divehi',
-  'Dogri', 'Dombe', 'Dutch', 'Dzongkha', 'English', 'Esperanto', 'Estonian', 'Ewe', 'Fijian',
-  'Filipino (Tagalog)', 'Finnish', 'French', 'French (Canadian)', 'Frisian', 'Fulfulde', 'Ga',
-  'Galician', 'Ganda (Luganda)', 'Georgian', 'German', 'Greek', 'Guarani', 'Gujarati',
-  'Haitian Creole', 'Hakha Chin', 'Hausa', 'Hawaiian', 'Hebrew', 'Hiligaynon', 'Hindi', 'Hmong',
-  'Hungarian', 'Hunsrik', 'Icelandic', 'Igbo', 'Iloko', 'Indonesian', 'Irish', 'Italian',
-  'Japanese', 'Javanese', 'Kannada', 'Kapampangan', 'Kazakh', 'Khmer', 'Kiga', 'Kinyarwanda',
-  'Kituba', 'Konkani', 'Korean', 'Krio', 'Kurdish (Kurmanji)', 'Kurdish (Sorani)', 'Kyrgyz',
-  'Lao', 'Latgalian', 'Latin', 'Latvian', 'Ligurian', 'Limburgan', 'Lingala', 'Lithuanian',
-  'Lombard', 'Luo', 'Luxembourgish', 'Macedonian', 'Maithili', 'Makassar', 'Malagasy', 'Malay',
-  'Malayalam', 'Maltese', 'Maori', 'Marathi', 'Meadow Mari', 'Meiteilon (Manipuri)', 'Minang',
-  'Mizo', 'Mongolian', 'Myanmar (Burmese)', 'Ndebele (South)', 'Nepalbhasa (Newari)', 'Nepali',
-  'Northern Sotho (Sepedi)', 'Norwegian', 'Nuer', 'Occitan', 'Odia (Oriya)', 'Oromo',
-  'Pangasinan', 'Papiamento', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Portuguese (Brazil)',
-  'Portuguese (Portugal)', 'Punjabi', 'Quechua', 'Romani', 'Romanian', 'Rundi', 'Russian',
-  'Samoan', 'Sango', 'Sanskrit', 'Scots Gaelic', 'Serbian', 'Sesotho', 'Seychellois Creole',
-  'Shan', 'Shona', 'Sicilian', 'Silesian', 'Sindhi', 'Sinhala', 'Slovak', 'Slovenian', 'Somali',
-  'Spanish', 'Sundanese', 'Swahili', 'Swati', 'Swedish', 'Tajik', 'Tamil', 'Tatar', 'Telugu',
-  'Tetum', 'Thai', 'Tigrinya', 'Tsonga', 'Tswana', 'Turkish', 'Turkmen', 'Twi (Akan)',
-  'Ukrainian', 'Urdu', 'Uyghur', 'Uzbek', 'Vietnamese', 'Welsh', 'Xhosa', 'Yiddish', 'Yoruba',
-  'Yucatec Maya', 'Zulu',
-];
-const DEFAULT_LANGUAGE = 'English';
-
 const errorBanner      = document.getElementById('errorBanner');
 const errorText        = document.getElementById('errorText');
 const statusBar         = document.getElementById('statusBar');
-const statusDot         = document.getElementById('statusDot');
 const statusLabel       = document.getElementById('statusLabel');
 const statusAction      = document.getElementById('statusAction');
 const textInput        = document.getElementById('textInput');
 const copyBtn          = document.getElementById('copyBtn');
 const loadingOverlay   = document.getElementById('loadingOverlay');
-const languageSelect   = document.getElementById('languageSelect');
-const toneSelect       = document.getElementById('toneSelect');
+const favPills          = document.getElementById('favPills');
+const addLangBtn        = document.getElementById('addLangBtn');
+const toneButtons       = document.getElementById('toneButtons');
 const translateBtn     = document.getElementById('translateBtn');
 const translateBtnText = document.getElementById('translateBtnText');
 const undoBtn          = document.getElementById('undoBtn');
@@ -51,18 +20,47 @@ const settingsBtn      = document.getElementById('settingsBtn');
 // can either Undo back to it, or retry with a different language/tone
 // without the result compounding on top of an already-translated string.
 let originalText = null;
+let favoriteLanguages = [];
+let targetLanguage = AUTO_LANGUAGE;
+let selectedTone = 'neutral';
+let selectedModel = DEFAULT_GEMINI_MODEL;
+let apiKeyConfigured = false;
 // Set while we programmatically update the textarea's value, so the
 // `input` listener below can tell that change apart from a manual edit.
 let isProgrammaticChange = false;
 
-function populateLanguages() {
-  for (const language of LANGUAGES) {
-    const option = document.createElement('option');
-    option.value = language;
-    option.textContent = language;
-    if (language === DEFAULT_LANGUAGE) option.selected = true;
-    languageSelect.appendChild(option);
-  }
+function renderFavorites() {
+  favPills.replaceChildren();
+  [AUTO_LANGUAGE, ...favoriteLanguages].forEach((language) => {
+    const button = document.createElement('button');
+    button.className = 'fav-pill' + (language === targetLanguage ? ' active' : '');
+    button.textContent = language === AUTO_LANGUAGE ? 'Auto' : language;
+    button.title = language === AUTO_LANGUAGE ? 'Keep the original language' : language;
+    button.type = 'button';
+    button.disabled = !apiKeyConfigured;
+    button.addEventListener('click', () => selectLanguage(language));
+    favPills.appendChild(button);
+  });
+  updateActionLabel();
+}
+
+function updateActionLabel() {
+  if (!translateBtnText || translateBtn.classList.contains('loading')) return;
+  translateBtnText.textContent = targetLanguage === AUTO_LANGUAGE ? 'Rewrite' : 'Translate';
+}
+
+async function selectLanguage(language) {
+  if (language === targetLanguage) return;
+  targetLanguage = language;
+  await chrome.storage.sync.set({ targetLanguage });
+  renderFavorites();
+}
+
+function renderToneButtons() {
+  toneButtons.querySelectorAll('.tone-button').forEach((button) => {
+    button.classList.toggle('active', button.dataset.tone === selectedTone);
+    button.disabled = !apiKeyConfigured;
+  });
 }
 
 function showError(message) {
@@ -74,12 +72,33 @@ function hideError() {
   errorBanner.classList.remove('visible');
 }
 
+function updateModelStatus(modelId = DEFAULT_GEMINI_MODEL) {
+  selectedModel = modelId || DEFAULT_GEMINI_MODEL;
+  const model = GEMINI_MODELS.find((item) => item.id === selectedModel);
+  statusLabel.textContent = model?.label || selectedModel;
+}
+
 function setApiKeyStatus(configured) {
-  statusDot.className = 'dot ' + (configured ? 'ok' : 'warn');
-  statusLabel.textContent = configured ? 'Ready' : 'API key required';
-  statusLabel.classList.toggle('warn', !configured);
+  apiKeyConfigured = configured;
+  updateModelStatus(selectedModel);
   statusBar.classList.toggle('warn', !configured);
   statusAction.classList.toggle('visible', !configured);
+  statusLabel.textContent = configured
+    ? (GEMINI_MODELS.find((item) => item.id === selectedModel)?.label || selectedModel)
+    : 'API Key Not Configured';
+  textInput.disabled = !configured;
+  copyBtn.disabled = !configured;
+  addLangBtn.disabled = !configured;
+  translateBtn.disabled = !configured;
+  translateBtn.classList.toggle('locked', !configured);
+  if (!configured) {
+    undoBtn.disabled = true;
+    showError('Gemini API key required. Open Settings to add your key and enable FixGrammar.');
+  } else {
+    hideError();
+  }
+  renderFavorites();
+  renderToneButtons();
 }
 
 function setUndoEnabled(enabled) {
@@ -89,7 +108,7 @@ function setUndoEnabled(enabled) {
 function setLoading(isLoading) {
   translateBtn.disabled = isLoading;
   translateBtn.classList.toggle('loading', isLoading);
-  translateBtnText.textContent = isLoading ? 'Translating…' : 'Translate';
+  translateBtnText.textContent = isLoading ? 'Working…' : (targetLanguage === AUTO_LANGUAGE ? 'Rewrite' : 'Translate');
   loadingOverlay.classList.toggle('visible', isLoading);
   textInput.readOnly = isLoading;
 }
@@ -106,18 +125,21 @@ copyBtn.addEventListener('click', async () => {
   if (!textInput.value) return;
   try {
     await navigator.clipboard.writeText(textInput.value);
-    copyBtn.textContent = '✅';
     copyBtn.classList.add('copied');
+    copyBtn.title = 'Copied';
   } catch {
-    copyBtn.textContent = '⚠️';
+    copyBtn.classList.add('failed');
+    copyBtn.title = 'Copy failed';
   }
   setTimeout(() => {
-    copyBtn.textContent = '📋';
     copyBtn.classList.remove('copied');
+    copyBtn.classList.remove('failed');
+    copyBtn.title = 'Copy text';
   }, 1500);
 });
 
 async function translate() {
+  if (!apiKeyConfigured) return;
   const textToTranslate = (originalText !== null ? originalText : textInput.value).trim();
   if (!textToTranslate) {
     showError('Enter some text first.');
@@ -133,8 +155,8 @@ async function translate() {
     const response = await chrome.runtime.sendMessage({
       action: 'translateText',
       text: textToTranslate,
-      targetLanguage: languageSelect.value,
-      tone: toneSelect.value,
+      targetLanguage,
+      tone: selectedTone,
     });
     if (response?.error) throw new Error(response.error);
 
@@ -166,6 +188,17 @@ settingsBtn.addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
 });
 
+addLangBtn.addEventListener('click', () => {
+  chrome.runtime.openOptionsPage();
+});
+
+toneButtons.addEventListener('click', (event) => {
+  const button = event.target.closest('.tone-button');
+  if (!button) return;
+  selectedTone = button.dataset.tone;
+  renderToneButtons();
+});
+
 statusAction.addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
 });
@@ -178,6 +211,20 @@ statusBar.addEventListener('click', (event) => {
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'sync') return;
+  if (changes.favoriteLanguages) {
+    favoriteLanguages = Array.isArray(changes.favoriteLanguages.newValue)
+      ? changes.favoriteLanguages.newValue
+      : DEFAULT_FAVORITE_LANGUAGES;
+    if (targetLanguage !== AUTO_LANGUAGE && !favoriteLanguages.includes(targetLanguage)) targetLanguage = AUTO_LANGUAGE;
+    renderFavorites();
+  }
+  if (changes.targetLanguage && (changes.targetLanguage.newValue === AUTO_LANGUAGE || favoriteLanguages.includes(changes.targetLanguage.newValue))) {
+    targetLanguage = changes.targetLanguage.newValue;
+    renderFavorites();
+  }
+  if (changes.geminiModel) {
+    updateModelStatus(changes.geminiModel.newValue || DEFAULT_GEMINI_MODEL);
+  }
   if (changes.geminiApiKey || changes.apiKeys) {
     chrome.storage.sync.get({ geminiApiKey: '', apiKeys: {} }).then(({ geminiApiKey, apiKeys }) => {
       setApiKeyStatus(!!(geminiApiKey || apiKeys?.gemini));
@@ -186,14 +233,16 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 async function init() {
-  populateLanguages();
-
-  const { geminiApiKey, apiKeys } = await chrome.storage.sync.get({ geminiApiKey: '', apiKeys: {} });
-  const configured = !!(geminiApiKey || apiKeys?.gemini);
+  const settings = await chrome.storage.sync.get({
+    geminiApiKey: '', apiKeys: {}, favoriteLanguages: DEFAULT_FAVORITE_LANGUAGES, targetLanguage: AUTO_LANGUAGE, geminiModel: DEFAULT_GEMINI_MODEL,
+  });
+  updateModelStatus(settings.geminiModel);
+  favoriteLanguages = Array.isArray(settings.favoriteLanguages) ? settings.favoriteLanguages : DEFAULT_FAVORITE_LANGUAGES;
+  targetLanguage = settings.targetLanguage === AUTO_LANGUAGE || favoriteLanguages.includes(settings.targetLanguage)
+    ? settings.targetLanguage
+    : AUTO_LANGUAGE;
+  const configured = !!(settings.geminiApiKey || settings.apiKeys?.gemini);
   setApiKeyStatus(configured);
-  if (!configured) {
-    showError('Add your Gemini API key in Settings to enable translation.');
-  }
 }
 
 init();

@@ -2,12 +2,10 @@
   "manifest_version": 3,
   "name": "FixGrammar",
   "version": "1.0.0",
-  "description": "Fix grammar and translate/rewrite selected text in any tone using Google Gemini.",
+  "description": "Fix grammar and translate/rewrite text in any tone using Google Gemini.",
   "permissions": [
-    "contextMenus",
-    "activeTab",
-    "scripting",
-    "storage"
+    "storage",
+    "sidePanel"
   ],
   "options_ui": {
     "page": "options.html",
@@ -20,30 +18,14 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "FixGrammar",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
+    "default_title": "FixGrammar"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
   },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["icons/icon16.png", "icons/icon48.png", "icons/icon128.png"],
-      "matches": ["<all_urls>"]
-    }
-  ],
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "all_frames": true,
-      "js": ["content.js"]
-    }
-  ]
+  }
 }

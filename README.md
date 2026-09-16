@@ -6,17 +6,16 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 **FixGrammar** is a Manifest V3 Chromium-based browser extension, powered by
-**Google Gemini**, that fixes grammar, spelling, and punctuation in text you
-select on any page — with an optional tone rewrite (formal, casual, friendly,
-and more) — and includes a toolbar popup for translating and rewriting any
-text into another language.
+**Google Gemini**, that fixes grammar, spelling, and punctuation in text from a
+toolbar side panel — with optional tone rewrites and translation.
 
 ## Features
 
-- Right-click context menu action to fix grammar in the selected text, with a processing indicator while the request is in flight
-- Works in `<input>`, `<textarea>`, and `contenteditable` elements
-- Right-click a selection to see **Formal**, **Casual**, **Friendly**, **Professional**, and **Concise** tone-rewrite options
-- Toolbar popup with a text box to translate and rewrite any text into ~20 languages and a chosen tone, with one-click **Undo** back to the original text
+- Toolbar side panel with a text box to translate and rewrite text, with one-click **Undo** back to the original text
+- **Auto** target mode to correct and rewrite text without changing its original language
+- Settings page with a searchable favorite-language picker; English, French, and Spanish are selected by default
+- Graphical tone controls for Neutral, Formal, Casual, Friendly, Professional, and Concise writing
+- The side panel adapts to its available width and remains usable at short heights
 - Automatic light/dark theme that follows your system preference
 - No remotely hosted executable code
 
@@ -33,35 +32,31 @@ text into another language.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
 5. Select the [`extension`](./extension) directory — not the repository root.
-6. Click the extension's toolbar icon to see the popup, then open **Settings** to enter your Gemini API key and pick a model.
+6. Click the extension's toolbar icon to open the side panel, then open **Settings** to enter your Gemini API key and pick a model.
 
 After changing extension files, click **Reload** on the extension card in
 `chrome://extensions` before testing again.
 
 ## Usage
 
-### Fix grammar or rewrite tone anywhere
-
-1. Select text in any input field, textarea, or editable content in the browser.
-2. Right-click the selection and choose **Fix Grammar** to correct it in place. A small processing indicator appears while the request is in flight.
-3. The right-click menu also shows **Formal**, **Casual**, **Friendly**, **Professional**, and **Concise** items — pick one to rewrite the selection in that tone.
-
-### Translate and rewrite in the popup
+### Translate and rewrite in the side panel
 
 1. Click the FixGrammar toolbar icon.
-2. Type or paste text into the box, choose a target language and tone, then click **Translate**.
-3. The result replaces the text in the same box. Click **Undo** to revert to the original text, or translate again to retry with a different language or tone.
+2. If the key is not configured, click **Open Settings**, add your Gemini API key, and save.
+3. Type or paste text into the box, then choose a favorite target language and tone.
+4. Choose **Auto** to correct and rewrite the text while keeping its original language. For another language, choose that language and click **Translate**.
+5. The result replaces the text in the same box. Click **Undo** to revert to the original text.
 
 ## Project structure
 
 ```text
 extension/
   manifest.json          Extension manifest and version
-  background.js          Manifest V3 service worker (builds the context menu, forwards clicks to the content script, runs all Gemini API calls)
-  content.js              Content script: selection capture, processing indicator, applies grammar/tone fixes to the page
-  popup.html / popup.js   Toolbar popup — translate & rewrite text box, with Undo
-  options.html / options.js  Settings page — Gemini API key and model selection
+   background.js          Manifest V3 service worker that runs Gemini API calls
+   popup.html / popup.js   Toolbar side panel — translate, rewrite, and tone controls
+   options.html / options.js  Settings page — API key, model, and favorite languages
   models.js               Shared Gemini model catalog (used by background.js and options.js)
+   languages.js             Shared language catalog and defaults
   icons/                  Toolbar and extension icons
 scripts/
   build.mjs               Builds the extension package (CRX + ZIP)
@@ -74,10 +69,9 @@ package.json              Node build-tool dependencies
 
 ## Privacy and data handling
 
-Grammar correction begins only after you select text and choose **Fix Grammar**
-or a tone item from the context menu; translation
-begins only when you click **Translate** in the popup. The text is sent
-directly to the Google Gemini API to generate a corrected/translated version.
+Translation and rewriting begin only when you click **Rewrite** or
+**Translate** in the side panel. The text is sent directly to the Google Gemini
+API to generate a corrected or translated version.
 The extension stores your Gemini API key in browser extension storage. It
 does not download or execute remotely hosted JavaScript or WebAssembly.
 
