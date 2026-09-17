@@ -5,6 +5,10 @@
 [![Build CRX](https://github.com/Arzaghi/FixGrammar/actions/workflows/build-crx.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/build-crx.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
+<p align="center">
+   <img src="./screenshots/promo%20big.png" alt="FixGrammar banner" width="100%" />
+</p>
+
 **FixGrammar** is a Manifest V3 Chromium-based browser extension, powered by
 **Google Gemini**, that fixes grammar, spelling, and punctuation in text from a
 toolbar side panel — with optional tone rewrites and translation.
