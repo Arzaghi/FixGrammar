@@ -81,7 +81,7 @@
 
     /* ── Status bar ──────────────────────────────────────────────── */
     .status-bar {
-      display: flex;
+      display: none;
       align-items: center;
       gap: 9px;
       padding: 9px 12px;
@@ -92,6 +92,7 @@
       margin-bottom: 10px;
       transition: border-color 0.2s;
     }
+    .status-bar.warn { display: flex; }
     .status-bar.warn { border-color: rgba(249, 171, 0, 0.4); cursor: pointer; }
     .gemini-status-icon {
       width: 18px;
@@ -394,6 +395,31 @@
       color: #fff;
       transition: filter 0.15s, opacity 0.15s;
     }
+    .translate-btn-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      line-height: 1;
+    }
+    .translate-btn-model {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      max-width: 100%;
+      color: currentColor;
+      opacity: 0.78;
+      font-size: 9px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .translate-btn-model-icon {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 9px;
+    }
     .translate-btn:hover:not(:disabled) { filter: brightness(1.08); }
     .translate-btn:disabled { opacity: 0.75; cursor: not-allowed; }
     .translate-btn.locked {
@@ -533,7 +559,18 @@
   </div>
 
   <div class="actions-row">
-    <button class="translate-btn" id="translateBtn"><span class="btn-spinner"></span><span id="translateBtnText">Translate</span></button>
+    <button class="translate-btn" id="translateBtn" type="button">
+      <span class="btn-spinner"></span>
+      <span class="translate-btn-label">
+        <span id="translateBtnText">Rewrite</span>
+        <span class="translate-btn-model" id="translateBtnModel">
+          <svg class="translate-btn-model-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 0c0 6.075 5.925 12 12 12-6.075 0-12 5.925-12 12 0-6.075-5.925-12-12-12C6.075 12 12 5.925 12 0Z" fill="currentColor"/>
+          </svg>
+          <span id="translateBtnModelName">Gemini</span>
+        </span>
+      </span>
+    </button>
     <button class="undo-btn" id="undoBtn" disabled title="Revert to original text">↩ Undo</button>
     <button class="icon-btn" id="settingsBtn" title="Open extension settings" aria-label="Open extension settings" type="button"><span class="settings-icon" aria-hidden="true">⚙</span><span>Settings</span></button>
   </div>

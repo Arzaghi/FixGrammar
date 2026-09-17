@@ -13,6 +13,7 @@ const addLangBtn        = document.getElementById('addLangBtn');
 const toneButtons       = document.getElementById('toneButtons');
 const translateBtn     = document.getElementById('translateBtn');
 const translateBtnText = document.getElementById('translateBtnText');
+const translateBtnModelName = document.getElementById('translateBtnModelName');
 const undoBtn          = document.getElementById('undoBtn');
 const settingsBtn      = document.getElementById('settingsBtn');
 
@@ -75,7 +76,9 @@ function hideError() {
 function updateModelStatus(modelId = DEFAULT_GEMINI_MODEL) {
   selectedModel = modelId || DEFAULT_GEMINI_MODEL;
   const model = GEMINI_MODELS.find((item) => item.id === selectedModel);
-  statusLabel.textContent = model?.label || selectedModel;
+  const modelLabel = model?.label || selectedModel;
+  statusLabel.textContent = modelLabel;
+  translateBtnModelName.textContent = modelLabel;
 }
 
 function setApiKeyStatus(configured) {
