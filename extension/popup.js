@@ -6,7 +6,6 @@ const statusBar         = document.getElementById('statusBar');
 const statusLabel       = document.getElementById('statusLabel');
 const statusAction      = document.getElementById('statusAction');
 const textInput        = document.getElementById('textInput');
-const copyBtn          = document.getElementById('copyBtn');
 const loadingOverlay   = document.getElementById('loadingOverlay');
 const favPills          = document.getElementById('favPills');
 const addLangBtn        = document.getElementById('addLangBtn');
@@ -90,7 +89,6 @@ function setApiKeyStatus(configured) {
     ? (GEMINI_MODELS.find((item) => item.id === selectedModel)?.label || selectedModel)
     : 'API Key Not Configured';
   textInput.disabled = !configured;
-  copyBtn.disabled = !configured;
   addLangBtn.disabled = !configured;
   translateBtn.disabled = !configured;
   translateBtn.classList.toggle('locked', !configured);
@@ -122,23 +120,6 @@ textInput.addEventListener('input', () => {
   if (isProgrammaticChange) return;
   originalText = null;
   setUndoEnabled(false);
-});
-
-copyBtn.addEventListener('click', async () => {
-  if (!textInput.value) return;
-  try {
-    await navigator.clipboard.writeText(textInput.value);
-    copyBtn.classList.add('copied');
-    copyBtn.title = 'Copied';
-  } catch {
-    copyBtn.classList.add('failed');
-    copyBtn.title = 'Copy failed';
-  }
-  setTimeout(() => {
-    copyBtn.classList.remove('copied');
-    copyBtn.classList.remove('failed');
-    copyBtn.title = 'Copy text';
-  }, 1500);
 });
 
 async function translate() {

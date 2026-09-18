@@ -174,11 +174,12 @@
     .fav-pill.active { background: rgba(66, 133, 244, 0.12); border-color: #4285f4; color: #1a56db; font-weight: 600; box-shadow: 0 0 0 1px rgba(66, 133, 244, 0.15); }
     .fav-empty { font-size: 11px; color: var(--text-muted); font-style: italic; }
 
-    .tone-section { min-width: 0; }
+    .tone-section { min-width: 0; container-type: inline-size; }
     .tone-label { display: block; margin-bottom: 7px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); font-weight: 600; }
     .tone-buttons {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(4, 72px);
+      justify-content: center;
       gap: 7px;
     }
     .tone-button {
@@ -203,6 +204,10 @@
     .tone-icon { width: 24px; height: 24px; display: block; }
     .tone-icon svg { width: 100%; height: 100%; display: block; }
     .tone-name { display: block; font-size: 11px; }
+
+    @container (min-width: 673px) {
+      .tone-buttons { grid-template-columns: repeat(8, 72px); }
+    }
 
     /* ── Error banner ────────────────────────────────────────────── */
     .error-banner {
@@ -274,10 +279,11 @@
 
     .textarea-wrap { position: relative; }
 
-    .copy-btn {
+    .undo-btn {
       position: absolute;
       top: 8px;
       right: 8px;
+      z-index: 2;
       width: 26px;
       height: 26px;
       display: flex;
@@ -292,16 +298,11 @@
       opacity: 0.9;
       transition: opacity 0.15s, border-color 0.15s, color 0.15s;
     }
-    .copy-btn:hover { opacity: 1; border-color: #4285f4; color: #4285f4; }
-    .copy-btn.copied { border-color: #34a853; color: #137333; }
-    .copy-btn.failed { border-color: #d93025; color: #d93025; }
-    .copy-btn svg { width: 15px; height: 15px; display: block; }
-    .copy-btn:disabled,
+    .undo-btn:hover:not(:disabled) { opacity: 1; border-color: #4285f4; color: #4285f4; }
+    .undo-btn:disabled { cursor: not-allowed; opacity: 0.42; filter: grayscale(1); }
+    .undo-btn svg { width: 15px; height: 15px; display: block; }
     .add-lang-btn:disabled,
     .fav-pill:disabled { cursor: not-allowed; opacity: 0.42; filter: grayscale(1); }
-    @media (prefers-color-scheme: dark) {
-      .copy-btn.copied { color: #81c995; }
-    }
 
     .loading-overlay {
       position: absolute;
@@ -447,22 +448,6 @@
       to { transform: rotate(360deg); }
     }
 
-    .undo-btn {
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      background: var(--input-bg);
-      border: 1.5px solid var(--input-border);
-      color: var(--text-secondary);
-      transition: border-color 0.15s, color 0.15s, opacity 0.15s;
-    }
-    .undo-btn:hover:not(:disabled) {
-      border-color: #4285f4;
-      color: #4285f4;
-    }
-    .undo-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
     @media (max-height: 620px) {
       body { min-height: 760px; }
       .editor-panel { flex: 0 0 240px; }
@@ -493,10 +478,10 @@
   <div class="card editor-panel">
     <div class="textarea-wrap">
       <textarea id="textInput" placeholder="Type or paste text here…" spellcheck="true"></textarea>
-      <button class="copy-btn" id="copyBtn" title="Copy text" aria-label="Copy text" type="button">
+      <button class="undo-btn" id="undoBtn" disabled title="Revert to original text" aria-label="Undo" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="8" y="8" width="11" height="12" rx="2"></rect>
-          <path d="M16 8V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h1"></path>
+          <path d="M9 7 4 12l5 5"></path>
+          <path d="M4 12h9a6 6 0 0 1 6 6"></path>
         </svg>
       </button>
       <div class="loading-overlay" id="loadingOverlay">
@@ -571,7 +556,6 @@
         </span>
       </span>
     </button>
-    <button class="undo-btn" id="undoBtn" disabled title="Revert to original text">↩ Undo</button>
     <button class="icon-btn" id="settingsBtn" title="Open extension settings" aria-label="Open extension settings" type="button"><span class="settings-icon" aria-hidden="true">⚙</span><span>Settings</span></button>
   </div>
 
