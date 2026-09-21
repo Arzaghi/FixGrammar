@@ -83,6 +83,10 @@ does not download or execute remotely hosted JavaScript or WebAssembly.
 Before publishing, provide an accurate privacy policy and complete the
 privacy disclosures required by your target browser store.
 
+See the [FixGrammar Privacy Policy](./PRIVACY_POLICY.md) for the extension's
+data handling details and the Google policies that apply to data sent through
+the Gemini API.
+
 ## Building locally
 
 ```bash
