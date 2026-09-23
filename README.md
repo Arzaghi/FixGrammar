@@ -3,6 +3,7 @@
 [![Latest release](https://img.shields.io/github/v/release/Arzaghi/FixGrammar?logo=github&label=release)](https://github.com/Arzaghi/FixGrammar/releases/latest)
 [![API integration test](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-integration.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/test-integration.yml)
 [![Build CRX](https://github.com/Arzaghi/FixGrammar/actions/workflows/build-crx.yml/badge.svg)](https://github.com/Arzaghi/FixGrammar/actions/workflows/build-crx.yml)
+[![Chrome Web Store version](https://img.shields.io/chrome-web-store/v/ahcokjmojbabadfdkogeaafpholilkog)](https://chromewebstore.google.com/detail/fixgrammar/ahcokjmojbabadfdkogeaafpholilkog)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 <p align="center">
